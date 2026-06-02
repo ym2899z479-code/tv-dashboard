@@ -60,7 +60,7 @@
   </div>
 
   <div class="max-w-screen-2xl mx-auto px-8 pt-4 pb-6">
-    <div class="flex items-end justify-between mb-4">
+    <div id="title-area" class="flex items-end justify-between mb-4">
       <div>
         <div id="screen-title" class="section-header text-zinc-100"></div>
         <div class="text-zinc-500 text-xs mt-0.5 flex items-center gap-x-2">
@@ -89,16 +89,7 @@
     </div>
 
     <div id="screen-3" class="dashboard-screen hidden">
-      <div class="grid grid-cols-2 gap-6">
-        <div>
-          <div id="goals-month-header" class="text-zinc-400 font-bold text-lg uppercase tracking-wider mb-3 px-1"></div>
-          <div class="grid grid-cols-1 gap-2.5" id="month-goals-list"></div>
-        </div>
-        <div>
-          <div id="goals-quarter-header" class="text-zinc-400 font-bold text-lg uppercase tracking-wider mb-3 px-1"></div>
-          <div class="grid grid-cols-1 gap-2.5" id="quarter-goals-list"></div>
-        </div>
-      </div>
+      <div class="grid grid-cols-[110px_1fr_1fr] gap-x-5 gap-y-3.5 items-center" id="goals-matrix-container"></div>
     </div>
   </div>
 
@@ -218,40 +209,62 @@
       
       // Calculate active Month String
       const monthStr = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-      document.getElementById('goals-month-header').textContent = monthStr;
-
       // Calculate active Ordinal Quarter Term
       const quarterNum = Math.floor((now.getMonth() + 3) / 3);
       const suffixes = ["th", "st", "nd", "rd", "th"];
       const quarterStr = `${quarterNum}${suffixes[quarterNum]} Quarter`;
-      document.getElementById('goals-quarter-header').textContent = quarterStr;
 
-      // Populate column subcontainers
-      const populateList = (elementId, dataset) => {
-        const container = document.getElementById(elementId);
-        container.innerHTML = '';
-        for (let i = 0; i < 3; i++) {
-          const textValue = dataset && dataset[i] ? dataset[i] : 'No goal set';
-          const div = document.createElement('div');
-          div.className = `goal-card bg-zinc-900/30 border border-zinc-800/50 rounded-xl px-5 py-3.5 flex items-start gap-x-3 shadow-md backdrop-blur-sm`;
-          div.innerHTML = `
-            <div class="text-zinc-500 text-xs font-bold uppercase tracking-wider mt-1 flex-shrink-0 w-14">Goal ${i+1}:</div>
-            <div class="text-zinc-200 text-base font-medium flex-1 tracking-tight leading-snug">${textValue}</div>
-          `;
-          container.appendChild(div);
-        }
-      };
+      const matrix = document.getElementById('goals-matrix-container');
+      
+      // Row 1: Header Titles completely centered across the layout cells
+      matrix.innerHTML = `
+        <div></div>
+        <div class="text-zinc-400 font-bold text-sm tracking-widest uppercase text-center border-b border-zinc-800/80 pb-2">${monthStr}</div>
+        <div class="text-zinc-400 font-bold text-sm tracking-widest uppercase text-center border-b border-zinc-800/80 pb-2">${quarterStr}</div>
+      `;
 
-      populateList('month-goals-list', dashboardData.goals?.month);
-      populateList('quarter-goals-list', dashboardData.goals?.quarter);
+      // Rows 2-4: Populate the matrix cells 
+      for (let i = 0; i < 3; i++) {
+        const mText = dashboardData.goals?.month?.[i] || '—';
+        const qText = dashboardData.goals?.quarter?.[i] || '—';
+
+        // 1. Centered label cell
+        const lbl = document.createElement('div');
+        lbl.className = "text-zinc-500 text-xs font-bold uppercase tracking-wider text-center h-full flex items-center justify-center";
+        lbl.textContent = `Goal ${i+1}:`;
+        matrix.appendChild(lbl);
+
+        // 2. Centered Month cell card
+        const mCell = document.createElement('div');
+        mCell.className = "goal-card bg-zinc-900/40 border border-zinc-800/50 rounded-xl p-4 min-h-[68px] flex items-center justify-center text-center shadow-md backdrop-blur-sm";
+        mCell.innerHTML = `<div class="text-zinc-200 text-base font-semibold tracking-tight leading-snug">${mText}</div>`;
+        matrix.appendChild(mCell);
+
+        // 3. Centered Quarter cell card
+        const qCell = document.createElement('div');
+        qCell.className = "goal-card bg-zinc-900/40 border border-zinc-800/50 rounded-xl p-4 min-h-[68px] flex items-center justify-center text-center shadow-md backdrop-blur-sm";
+        qCell.innerHTML = `<div class="text-zinc-200 text-base font-semibold tracking-tight leading-snug">${qText}</div>`;
+        matrix.appendChild(qCell);
+      }
     }
 
     function renderCurrentScreen() {
       document.querySelectorAll('.dashboard-screen').forEach(el => el.classList.add('hidden'));
       document.getElementById(`screen-${currentScreen}`).classList.remove('hidden');
+      
       const titles = ['Calendar', 'My Tasks', 'BuilderTrend Tasks', 'Goals'];
       document.getElementById('screen-title').textContent = titles[currentScreen];
       
+      // Dynamically center the screen layout structure ONLY when displaying the Goals block
+      const titleBlock = document.getElementById('title-area');
+      if (currentScreen === 3) {
+        titleBlock.className = "flex flex-col items-center justify-center text-center mb-6 burn-protected-header";
+        document.getElementById('screen-dots').className = "flex items-center gap-x-2 mt-3";
+      } else {
+        titleBlock.className = "flex items-end justify-between mb-4";
+        document.getElementById('screen-dots').className = "flex items-center gap-x-2";
+      }
+
       document.querySelectorAll('#screen-dots > div').forEach((dot, idx) => {
         dot.className = idx === currentScreen 
           ? "w-2.5 h-2.5 rounded-full bg-zinc-300 cursor-pointer transition-all" 
