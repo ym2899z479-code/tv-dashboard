@@ -38,6 +38,7 @@
 </head>
 <body class="moving-ambient-bg text-zinc-200 min-h-screen">
   
+  <!-- Top Bar -->
   <div class="border-b border-zinc-900/60 bg-zinc-950/40 backdrop-blur sticky top-0 z-50 burn-protected-header">
     <div class="max-w-screen-2xl mx-auto px-8 py-3 flex items-center justify-between">
       <div class="flex items-center gap-x-4">
@@ -76,20 +77,24 @@
       </div>
     </div>
 
+    <!-- SCREEN 1: Calendar -->
     <div id="screen-0" class="dashboard-screen">
       <div class="grid grid-cols-1 gap-2.5" id="calendar-list"></div>
     </div>
 
+    <!-- SCREEN 2: My Tasks -->
     <div id="screen-1" class="dashboard-screen hidden">
       <div class="grid grid-cols-1 gap-2.5" id="mytasks-list"></div>
     </div>
 
+    <!-- SCREEN 3: BuilderTrend Tasks -->
     <div id="screen-2" class="dashboard-screen hidden">
       <div class="grid grid-cols-1 gap-2.5" id="buildertrend-list"></div>
     </div>
 
+    <!-- SCREEN 4: 4-Column Balanced Grid Matrix Layout -->
     <div id="screen-3" class="dashboard-screen hidden">
-      <div class="grid grid-cols-[110px_1fr_1fr] gap-x-5 gap-y-3.5 items-center" id="goals-matrix-container"></div>
+      <div class="grid grid-cols-[110px_1fr_1fr_1fr] gap-x-5 gap-y-3.5 items-center" id="goals-matrix-container"></div>
     </div>
   </div>
 
@@ -99,7 +104,7 @@
     let currentScreen = 0;
     let rotationInterval = null;
     let dataRefreshInterval = null;
-    let dashboardData = { calendarEvents: [], myTasks: [], buildertrendTasks: [], goals: { month: [], quarter: [] } };
+    let dashboardData = { calendarEvents: [], myTasks: [], buildertrendTasks: [], goals: { month: [], quarter: [], monthRevenue: '—', quarterRevenue: '—' } };
 
     function updateClock() {
       const now = new Date();
@@ -120,7 +125,7 @@
           calendarEvents: raw.calendarEvents || [],
           myTasks: raw.myTasks || [],
           buildertrendTasks: raw.buildertrendTasks || [],
-          goals: raw.goals || { month: [], quarter: [] },
+          goals: raw.goals || { month: [], quarter: [], monthRevenue: '—', quarterRevenue: '—' },
           lastUpdated: raw.lastUpdated || new Date().toISOString()
         };
         console.log("Data loaded successfully");
@@ -206,45 +211,67 @@
 
     function renderGoals() {
       const now = new Date();
-      
-      // Calculate active Month String
       const monthStr = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-      // Calculate active Ordinal Quarter Term
+      
       const quarterNum = Math.floor((now.getMonth() + 3) / 3);
       const suffixes = ["th", "st", "nd", "rd", "th"];
       const quarterStr = `${quarterNum}${suffixes[quarterNum]} Quarter`;
 
       const matrix = document.getElementById('goals-matrix-container');
       
-      // Row 1: Header Titles completely centered across the layout cells
+      // Row 1: Completely Centered Header Cells for all columns
       matrix.innerHTML = `
         <div></div>
         <div class="text-zinc-400 font-bold text-sm tracking-widest uppercase text-center border-b border-zinc-800/80 pb-2">${monthStr}</div>
         <div class="text-zinc-400 font-bold text-sm tracking-widest uppercase text-center border-b border-zinc-800/80 pb-2">${quarterStr}</div>
+        <div class="text-emerald-500/90 font-bold text-sm tracking-widest uppercase text-center border-b border-emerald-900/30 pb-2"><i class="fa-solid fa-chart-line fa-sm mr-1.5"></i>Revenue Targets</div>
       `;
 
-      // Rows 2-4: Populate the matrix cells 
+      // Rows 2-4: Build out the 3 Goals rows side-by-side
       for (let i = 0; i < 3; i++) {
         const mText = dashboardData.goals?.month?.[i] || '—';
         const qText = dashboardData.goals?.quarter?.[i] || '—';
 
-        // 1. Centered label cell
+        // Column 1: Centered Row Descriptor
         const lbl = document.createElement('div');
         lbl.className = "text-zinc-500 text-xs font-bold uppercase tracking-wider text-center h-full flex items-center justify-center";
         lbl.textContent = `Goal ${i+1}:`;
         matrix.appendChild(lbl);
 
-        // 2. Centered Month cell card
+        // Column 2: Centered Month Goal Card
         const mCell = document.createElement('div');
         mCell.className = "goal-card bg-zinc-900/40 border border-zinc-800/50 rounded-xl p-4 min-h-[68px] flex items-center justify-center text-center shadow-md backdrop-blur-sm";
         mCell.innerHTML = `<div class="text-zinc-200 text-base font-semibold tracking-tight leading-snug">${mText}</div>`;
         matrix.appendChild(mCell);
 
-        // 3. Centered Quarter cell card
+        // Column 3: Centered Quarter Goal Card
         const qCell = document.createElement('div');
         qCell.className = "goal-card bg-zinc-900/40 border border-zinc-800/50 rounded-xl p-4 min-h-[68px] flex items-center justify-center text-center shadow-md backdrop-blur-sm";
         qCell.innerHTML = `<div class="text-zinc-200 text-base font-semibold tracking-tight leading-snug">${qText}</div>`;
         matrix.appendChild(qCell);
+
+        // Column 4: Revenue Goals Placement (Row 1 = Month target, Row 2 = Quarter target, Row 3 = Status indicator)
+        const revCell = document.createElement('div');
+        if (i === 0) {
+          revCell.className = "goal-card border border-emerald-900/30 rounded-xl p-4 min-h-[68px] flex flex-col items-center justify-center text-center shadow-md backdrop-blur-sm";
+          revCell.style.background = 'linear-gradient(180deg, rgba(16,185,129,0.03) 0%, rgba(0,0,0,0) 100%)';
+          revCell.innerHTML = `
+            <div class="text-[10px] font-bold text-emerald-500/60 uppercase tracking-widest mb-0.5">Month Target</div>
+            <div class="text-emerald-400 text-xl font-bold tracking-tight">${dashboardData.goals?.monthRevenue || '—'}</div>
+          `;
+        } else if (i === 1) {
+          revCell.className = "goal-card border border-emerald-900/30 rounded-xl p-4 min-h-[68px] flex flex-col items-center justify-center text-center shadow-md backdrop-blur-sm";
+          revCell.style.background = 'linear-gradient(180deg, rgba(16,185,129,0.03) 0%, rgba(0,0,0,0) 100%)';
+          revCell.innerHTML = `
+            <div class="text-[10px] font-bold text-emerald-500/60 uppercase tracking-widest mb-0.5">Quarter Target</div>
+            <div class="text-emerald-400 text-xl font-bold tracking-tight">${dashboardData.goals?.quarterRevenue || '—'}</div>
+          `;
+        } else {
+          // Row 3 Column 4: Minimalist balance spacer card keeping the TV grid complete
+          revCell.className = "goal-card bg-zinc-950/20 border border-zinc-900/40 border-dashed rounded-xl p-4 min-h-[68px] flex items-center justify-center text-center opacity-40";
+          revCell.innerHTML = `<div class="text-zinc-600 text-xs font-bold tracking-widest uppercase"><i class="fa-solid fa-lock fa-xs mr-1"></i> Locked In</div>`;
+        }
+        matrix.appendChild(revCell);
       }
     }
 
@@ -255,7 +282,6 @@
       const titles = ['Calendar', 'My Tasks', 'BuilderTrend Tasks', 'Goals'];
       document.getElementById('screen-title').textContent = titles[currentScreen];
       
-      // Dynamically center the screen layout structure ONLY when displaying the Goals block
       const titleBlock = document.getElementById('title-area');
       if (currentScreen === 3) {
         titleBlock.className = "flex flex-col items-center justify-center text-center mb-6 burn-protected-header";
