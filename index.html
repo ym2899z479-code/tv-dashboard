@@ -38,7 +38,6 @@
 </head>
 <body class="moving-ambient-bg text-zinc-200 min-h-screen">
   
-  <!-- Top Bar -->
   <div class="border-b border-zinc-900/60 bg-zinc-950/40 backdrop-blur sticky top-0 z-50 burn-protected-header">
     <div class="max-w-screen-2xl mx-auto px-8 py-3 flex items-center justify-between">
       <div class="flex items-center gap-x-4">
@@ -77,25 +76,20 @@
       </div>
     </div>
 
-    <!-- SCREEN 1: Calendar -->
     <div id="screen-0" class="dashboard-screen">
       <div class="grid grid-cols-1 gap-2.5" id="calendar-list"></div>
     </div>
 
-    <!-- SCREEN 2: My Tasks -->
     <div id="screen-1" class="dashboard-screen hidden">
       <div class="grid grid-cols-1 gap-2.5" id="mytasks-list"></div>
     </div>
 
-    <!-- SCREEN 3: BuilderTrend Tasks -->
     <div id="screen-2" class="dashboard-screen hidden">
       <div class="grid grid-cols-1 gap-2.5" id="buildertrend-list"></div>
     </div>
 
-    <!-- SCREEN 4: Goals Layout -->
     <div id="screen-3" class="dashboard-screen hidden">
-      <!-- Expanded first track to 190px to easily secure the large header row tags without line wrapping -->
-      <div class="grid grid-cols-[190px_1fr_1fr] gap-x-5 gap-y-3.5 items-center" id="goals-matrix-container"></div>
+      <div class="grid grid-cols-[160px_1fr_1fr] gap-x-5 gap-y-3.5 items-center" id="goals-matrix-container"></div>
     </div>
   </div>
 
@@ -232,10 +226,10 @@
 
       var matrix = document.getElementById('goals-matrix-container');
       
-      // SCALED UP: Column Titles increased to text-3xl
+      // SCALED UP: Column Titles increased from text-sm to text-2xl
       matrix.innerHTML = '<div></div>' +
-        '<div class="text-zinc-300 font-bold text-3xl tracking-wide text-center border-b border-zinc-800/80 pb-2">' + monthStr + '</div>' +
-        '<div class="text-zinc-300 font-bold text-3xl tracking-wide text-center border-b border-zinc-800/80 pb-2">' + quarterStr + '</div>';
+        '<div class="text-zinc-300 font-bold text-2xl tracking-wide text-center border-b border-zinc-800/80 pb-2">' + monthStr + '</div>' +
+        '<div class="text-zinc-300 font-bold text-2xl tracking-wide text-center border-b border-zinc-800/80 pb-2">' + quarterStr + '</div>';
 
       var goalsData = dashboardData.goals || { month: [], quarter: [], monthRevenue: '—', quarterRevenue: '—' };
 
@@ -243,9 +237,9 @@
         var mText = (goalsData.month && goalsData.month[i]) || '—';
         var qText = (goalsData.quarter && goalsData.quarter[i]) || '—';
 
-        // SCALED UP: Row labels increased to text-2xl
+        // SCALED UP: Row labels increased from text-sm to text-xl
         var lbl = document.createElement('div');
-        lbl.className = "text-zinc-400 text-2xl font-bold uppercase tracking-wide text-center h-full flex items-center justify-center";
+        lbl.className = "text-zinc-400 text-xl font-bold uppercase tracking-wide text-center h-full flex items-center justify-center";
         lbl.textContent = 'Goal ' + (i + 1) + ':';
         matrix.appendChild(lbl);
 
@@ -260,9 +254,9 @@
         matrix.appendChild(qCell);
       }
 
-      // SCALED UP: Revenue row heading expanded to text-2xl
+      // SCALED UP: Revenue row heading expanded from text-sm to text-xl
       var revLabel = document.createElement('div');
-      revLabel.className = "text-emerald-400 text-2xl font-bold uppercase tracking-wide text-center h-full flex items-center justify-center mt-2";
+      revLabel.className = "text-emerald-400 text-xl font-bold uppercase tracking-wide text-center h-full flex items-center justify-center mt-2";
       revLabel.innerHTML = '<i class="fa-solid fa-chart-line mr-1"></i> Revenue:';
       matrix.appendChild(revLabel);
 
@@ -339,34 +333,4 @@
     window.onload = initDashboard;
   </script>
 </body>
-</html>  </style>
-</head>
-<body class="moving-ambient-bg text-zinc-200 min-h-screen">
-  
-  <div class="border-b border-zinc-900/60 bg-zinc-950/40 backdrop-blur sticky top-0 z-50 burn-protected-header">
-    <div class="max-w-screen-2xl mx-auto px-8 py-3 flex items-center justify-between">
-      <div class="flex items-center gap-x-4">
-        <div class="flex items-center gap-x-3">
-          <div class="w-9 h-9 bg-zinc-200 rounded-xl flex items-center justify-center p-1 shadow-inner opacity-90">
-            <img src="FD.png" alt="Five Development Logo" class="w-full h-full object-contain">
-          </div>
-          <div>
-            <div class="font-semibold tracking-tight text-xl text-zinc-300">Five Development</div>
-          </div>
-        </div>
-      </div>
-      <div class="flex items-center gap-x-8">
-        <div class="text-right">
-          <div id="live-time" class="text-2xl font-bold tracking-tight text-zinc-300"></div>
-          <div id="live-date" class="text-[10px] font-medium text-zinc-500 tracking-[1px] uppercase mt-0.5"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="max-w-screen-2xl mx-auto px-8 pt-4 pb-6">
-    <div id="title-area" class="flex items-end justify-between mb-4 burn-protected-header">
-      <div>
-        <div id="screen-title" class="section-header text-zinc-100"></div>
-        <div class="text-zinc-500 text-xs mt-0.5 flex items-center gap-x-2">
-          <i class="fa-solid fa-sync
+</html>
