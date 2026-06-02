@@ -10,7 +10,7 @@
     body { font-family: 'Inter', system-ui, sans-serif; }
     .section-header { font-size: 1.8rem; line-height: 2.1rem; font-weight: 700; letter-spacing: -.04em; }
     .dashboard-screen { transition: opacity 400ms ease, transform 400ms ease; }
-    .event-row, .task-row { transition: all 0.2s ease; }
+    .event-row, .task-row, .goal-card { transition: all 0.2s ease; }
 
     /* ANTI-BURN ANIMATED LIQUID BACKGROUND */
     @keyframes fluidBg {
@@ -38,7 +38,6 @@
 </head>
 <body class="moving-ambient-bg text-zinc-200 min-h-screen">
   
-  <!-- Top Bar -->
   <div class="border-b border-zinc-900/60 bg-zinc-950/40 backdrop-blur sticky top-0 z-50 burn-protected-header">
     <div class="max-w-screen-2xl mx-auto px-8 py-3 flex items-center justify-between">
       <div class="flex items-center gap-x-4">
@@ -53,7 +52,6 @@
       </div>
       <div class="flex items-center gap-x-8">
         <div class="text-right">
-          <!-- REMOVED font-mono: Clock now beautifully uses the crisp Inter sans-serif font -->
           <div id="live-time" class="text-2xl font-bold tracking-tight text-zinc-300"></div>
           <div id="live-date" class="text-[10px] font-medium text-zinc-500 tracking-[1px] uppercase mt-0.5"></div>
         </div>
@@ -74,22 +72,33 @@
         <div onclick="switchToScreen(0)" class="w-2.5 h-2.5 rounded-full bg-zinc-300 cursor-pointer transition-all" data-screen="0"></div>
         <div onclick="switchToScreen(1)" class="w-2.5 h-2.5 rounded-full bg-zinc-800 hover:bg-zinc-700 cursor-pointer transition-all" data-screen="1"></div>
         <div onclick="switchToScreen(2)" class="w-2.5 h-2.5 rounded-full bg-zinc-800 hover:bg-zinc-700 cursor-pointer transition-all" data-screen="2"></div>
+        <div onclick="switchToScreen(3)" class="w-2.5 h-2.5 rounded-full bg-zinc-800 hover:bg-zinc-700 cursor-pointer transition-all" data-screen="3"></div>
       </div>
     </div>
 
-    <!-- SCREEN 1: Calendar -->
     <div id="screen-0" class="dashboard-screen">
       <div class="grid grid-cols-1 gap-2.5" id="calendar-list"></div>
     </div>
 
-    <!-- SCREEN 2: My Tasks -->
     <div id="screen-1" class="dashboard-screen hidden">
       <div class="grid grid-cols-1 gap-2.5" id="mytasks-list"></div>
     </div>
 
-    <!-- SCREEN 3: BuilderTrend Tasks -->
     <div id="screen-2" class="dashboard-screen hidden">
       <div class="grid grid-cols-1 gap-2.5" id="buildertrend-list"></div>
+    </div>
+
+    <div id="screen-3" class="dashboard-screen hidden">
+      <div class="grid grid-cols-2 gap-6">
+        <div>
+          <div id="goals-month-header" class="text-zinc-400 font-bold text-lg uppercase tracking-wider mb-3 px-1"></div>
+          <div class="grid grid-cols-1 gap-2.5" id="month-goals-list"></div>
+        </div>
+        <div>
+          <div id="goals-quarter-header" class="text-zinc-400 font-bold text-lg uppercase tracking-wider mb-3 px-1"></div>
+          <div class="grid grid-cols-1 gap-2.5" id="quarter-goals-list"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -99,7 +108,7 @@
     let currentScreen = 0;
     let rotationInterval = null;
     let dataRefreshInterval = null;
-    let dashboardData = { calendarEvents: [], myTasks: [], buildertrendTasks: [] };
+    let dashboardData = { calendarEvents: [], myTasks: [], buildertrendTasks: [], goals: { month: [], quarter: [] } };
 
     function updateClock() {
       const now = new Date();
@@ -111,18 +120,6 @@
       });
     }
 
-    function ensureArrays() {
-      if (!Array.isArray(dashboardData.calendarEvents)) {
-        dashboardData.calendarEvents = dashboardData.calendarEvents ? [dashboardData.calendarEvents] : [];
-      }
-      if (!Array.isArray(dashboardData.myTasks)) {
-        dashboardData.myTasks = dashboardData.myTasks ? [dashboardData.myTasks] : [];
-      }
-      if (!Array.isArray(dashboardData.buildertrendTasks)) {
-        dashboardData.buildertrendTasks = dashboardData.buildertrendTasks ? [dashboardData.buildertrendTasks] : [];
-      }
-    }
-
     async function fetchData() {
       try {
         const res = await fetch(WEBHOOK_URL);
@@ -132,22 +129,20 @@
           calendarEvents: raw.calendarEvents || [],
           myTasks: raw.myTasks || [],
           buildertrendTasks: raw.buildertrendTasks || [],
+          goals: raw.goals || { month: [], quarter: [] },
           lastUpdated: raw.lastUpdated || new Date().toISOString()
         };
-        ensureArrays();
         console.log("Data loaded successfully");
       } catch (err) {
         console.error("Failed to load data:", err);
-        ensureArrays();
       }
       renderCurrentScreen();
     }
 
     function renderCalendar() {
-      ensureArrays();
       const container = document.getElementById('calendar-list');
       container.innerHTML = '';
-      const events = dashboardData.calendarEvents;
+      const events = dashboardData.calendarEvents || [];
       
       if (events.length === 0) {
         container.innerHTML = `<div class="bg-zinc-900/40 border border-zinc-800/60 rounded-2xl p-6 text-center"><i class="fa-regular fa-calendar text-3xl text-zinc-700 mb-3"></i><div class="text-lg text-zinc-400">No events scheduled</div></div>`;
@@ -159,7 +154,6 @@
       events.forEach(event => {
         const accent = colorMap[event.colorId] || '#3b82f6';
         const div = document.createElement('div');
-        
         div.className = `event-row border border-zinc-800/40 rounded-xl py-3.5 px-5 flex items-center gap-x-4 transition-all shadow-md`;
         div.style.background = `linear-gradient(90deg, ${accent}12 0%, rgba(18,18,24,0.75) 100%)`;
         div.style.borderLeft = `5px solid ${accent}`;
@@ -169,7 +163,6 @@
             <div class="font-bold text-xl tracking-tight text-zinc-100 truncate">${event.title}</div>
             <div class="text-xs font-semibold text-zinc-400 flex items-center gap-x-1.5 flex-shrink-0">
               <i class="fa-regular fa-clock opacity-80 text-sm" style="color:${accent}"></i>
-              <!-- REMOVED font-mono: Time windows now cleanly match your titles -->
               <span class="tracking-tight text-sm font-semibold">${event.timeframe}</span>
             </div>
           </div>
@@ -179,7 +172,6 @@
     }
 
     function renderTasks(listId, tasksInput) {
-      ensureArrays();
       const container = document.getElementById(listId);
       container.innerHTML = '';
       const tasks = tasksInput || [];
@@ -221,26 +213,55 @@
       });
     }
 
-    document.getElementById('screen-dots').style.display = 'none';
+    function renderGoals() {
+      const now = new Date();
+      
+      // Calculate active Month String
+      const monthStr = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      document.getElementById('goals-month-header').textContent = monthStr;
+
+      // Calculate active Ordinal Quarter Term
+      const quarterNum = Math.floor((now.getMonth() + 3) / 3);
+      const suffixes = ["th", "st", "nd", "rd", "th"];
+      const quarterStr = `${quarterNum}${suffixes[quarterNum]} Quarter`;
+      document.getElementById('goals-quarter-header').textContent = quarterStr;
+
+      // Populate column subcontainers
+      const populateList = (elementId, dataset) => {
+        const container = document.getElementById(elementId);
+        container.innerHTML = '';
+        for (let i = 0; i < 3; i++) {
+          const textValue = dataset && dataset[i] ? dataset[i] : 'No goal set';
+          const div = document.createElement('div');
+          div.className = `goal-card bg-zinc-900/30 border border-zinc-800/50 rounded-xl px-5 py-3.5 flex items-start gap-x-3 shadow-md backdrop-blur-sm`;
+          div.innerHTML = `
+            <div class="text-zinc-500 text-xs font-bold uppercase tracking-wider mt-1 flex-shrink-0 w-14">Goal ${i+1}:</div>
+            <div class="text-zinc-200 text-base font-medium flex-1 tracking-tight leading-snug">${textValue}</div>
+          `;
+          container.appendChild(div);
+        }
+      };
+
+      populateList('month-goals-list', dashboardData.goals?.month);
+      populateList('quarter-goals-list', dashboardData.goals?.quarter);
+    }
 
     function renderCurrentScreen() {
-      ensureArrays();
       document.querySelectorAll('.dashboard-screen').forEach(el => el.classList.add('hidden'));
       document.getElementById(`screen-${currentScreen}`).classList.remove('hidden');
-      const titles = ['Calendar', 'My Tasks', 'BuilderTrend Tasks'];
+      const titles = ['Calendar', 'My Tasks', 'BuilderTrend Tasks', 'Goals'];
       document.getElementById('screen-title').textContent = titles[currentScreen];
       
       document.querySelectorAll('#screen-dots > div').forEach((dot, idx) => {
-        if (idx === currentScreen) {
-          dot.className = "w-2.5 h-2.5 rounded-full bg-zinc-300 cursor-pointer transition-all";
-        } else {
-          dot.className = "w-2.5 h-2.5 rounded-full bg-zinc-800 hover:bg-zinc-700 cursor-pointer transition-all";
-        }
+        dot.className = idx === currentScreen 
+          ? "w-2.5 h-2.5 rounded-full bg-zinc-300 cursor-pointer transition-all" 
+          : "w-2.5 h-2.5 rounded-full bg-zinc-800 hover:bg-zinc-700 cursor-pointer transition-all";
       });
 
       if (currentScreen === 0) renderCalendar();
       if (currentScreen === 1) renderTasks('mytasks-list', dashboardData.myTasks);
       if (currentScreen === 2) renderTasks('buildertrend-list', dashboardData.buildertrendTasks);
+      if (currentScreen === 3) renderGoals();
     }
 
     function switchToScreen(index) {
@@ -251,7 +272,7 @@
     function startRotation() {
       if (rotationInterval) clearInterval(rotationInterval);
       rotationInterval = setInterval(() => {
-        currentScreen = (currentScreen + 1) % 3;
+        currentScreen = (currentScreen + 1) % 4;
         renderCurrentScreen();
       }, 30000);
     }
@@ -271,8 +292,8 @@
     }
 
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowRight') { currentScreen = (currentScreen + 1) % 3; renderCurrentScreen(); }
-      if (e.key === 'ArrowLeft') { currentScreen = (currentScreen - 1 + 3) % 3; renderCurrentScreen(); }
+      if (e.key === 'ArrowRight') { currentScreen = (currentScreen + 1) % 4; renderCurrentScreen(); }
+      if (e.key === 'ArrowLeft') { currentScreen = (currentScreen - 1 + 4) % 4; renderCurrentScreen(); }
     });
 
     window.onload = initDashboard;
