@@ -86,13 +86,26 @@
       });
     }
 
+    function toArray(val) {
+      if (Array.isArray(val)) return val;
+      if (val && typeof val === 'object') return [val];
+      return [];
+    }
+
     async function fetchData() {
       try {
         const res = await fetch(WEBHOOK_URL);
-        if (!res.ok) throw new Error('Webhook error');
-        dashboardData = await res.json();
+        if (!res.ok) throw new Error('HTTP error');
+        const raw = await res.json();
+        dashboardData = {
+          calendarEvents: toArray(raw.calendarEvents),
+          myTasks: toArray(raw.myTasks),
+          buildertrendTasks: toArray(raw.buildertrendTasks),
+          lastUpdated: raw.lastUpdated || new Date().toISOString()
+        };
+        console.log("Data loaded:", dashboardData);
       } catch (err) {
-        console.error('Failed to fetch data:', err);
+        console.error("Failed to load data:", err);
       }
       renderCurrentScreen();
     }
@@ -100,12 +113,13 @@
     function renderCalendar() {
       const container = document.getElementById('calendar-list');
       container.innerHTML = '';
-      if (!dashboardData.calendarEvents || dashboardData.calendarEvents.length === 0) {
+      const events = dashboardData.calendarEvents || [];
+      if (events.length === 0) {
         container.innerHTML = `<div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 text-center"><i class="fa-regular fa-calendar text-4xl text-zinc-700 mb-4"></i><div class="text-xl text-zinc-400">No events scheduled</div></div>`;
         return;
       }
       const colorMap = {'1':'#6366f1','2':'#22c55e','3':'#a855f7','4':'#f43f5e','5':'#eab308','6':'#f97316','7':'#0ea5e9','8':'#64748b','9':'#3b82f6','10':'#10b981','11':'#ef4444'};
-      dashboardData.calendarEvents.forEach(event => {
+      events.forEach(event => {
         const accent = colorMap[event.colorId] || '#64748b';
         const div = document.createElement('div');
         div.className = `event-row bg-zinc-900 border border-zinc-800 rounded-3xl px-7 py-5 flex items-center gap-x-5`;
@@ -117,11 +131,12 @@
     function renderTasks(listId, tasks) {
       const container = document.getElementById(listId);
       container.innerHTML = '';
-      if (!tasks || tasks.length === 0) {
+      const taskList = tasks || [];
+      if (taskList.length === 0) {
         container.innerHTML = `<div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 text-center"><i class="fa-regular fa-check-circle text-4xl text-emerald-700 mb-4"></i><div class="text-xl text-zinc-400">All caught up — nice work</div></div>`;
         return;
       }
-      tasks.forEach(task => {
+      taskList.forEach(task => {
         const div = document.createElement('div');
         div.className = `task-row bg-zinc-900 border border-zinc-800 rounded-3xl px-7 py-5 flex items-center gap-x-5`;
         const dueHTML = task.isToday ? `<span class="px-3.5 py-1 text-xs font-medium tracking-wider rounded-2xl bg-emerald-500/10 text-emerald-400">TODAY</span>` : `<span class="px-3.5 py-1 text-xs font-medium tracking-wider rounded-2xl bg-zinc-800 text-zinc-400">${task.dueLabel}</span>`;
@@ -161,8 +176,8 @@
     async function initDashboard() {
       updateClock();
       setInterval(updateClock, 30000);
+      renderCurrentScreen();
       await fetchData();
-      currentScreen = 0;
       startRotation();
       startAutoRefresh();
     }
