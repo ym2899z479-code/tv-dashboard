@@ -86,10 +86,16 @@
       });
     }
 
-    function toArray(val) {
-      if (Array.isArray(val)) return val;
-      if (val && typeof val === 'object') return [val];
-      return [];
+    function ensureArrays() {
+      if (!Array.isArray(dashboardData.calendarEvents)) {
+        dashboardData.calendarEvents = dashboardData.calendarEvents ? [dashboardData.calendarEvents] : [];
+      }
+      if (!Array.isArray(dashboardData.myTasks)) {
+        dashboardData.myTasks = dashboardData.myTasks ? [dashboardData.myTasks] : [];
+      }
+      if (!Array.isArray(dashboardData.buildertrendTasks)) {
+        dashboardData.buildertrendTasks = dashboardData.buildertrendTasks ? [dashboardData.buildertrendTasks] : [];
+      }
     }
 
     async function fetchData() {
@@ -98,22 +104,25 @@
         if (!res.ok) throw new Error('HTTP error');
         const raw = await res.json();
         dashboardData = {
-          calendarEvents: toArray(raw.calendarEvents),
-          myTasks: toArray(raw.myTasks),
-          buildertrendTasks: toArray(raw.buildertrendTasks),
+          calendarEvents: raw.calendarEvents || [],
+          myTasks: raw.myTasks || [],
+          buildertrendTasks: raw.buildertrendTasks || [],
           lastUpdated: raw.lastUpdated || new Date().toISOString()
         };
-        console.log("Data loaded:", dashboardData);
+        ensureArrays();
+        console.log("Data loaded successfully");
       } catch (err) {
         console.error("Failed to load data:", err);
+        ensureArrays();
       }
       renderCurrentScreen();
     }
 
     function renderCalendar() {
+      ensureArrays();
       const container = document.getElementById('calendar-list');
       container.innerHTML = '';
-      const events = dashboardData.calendarEvents || [];
+      const events = dashboardData.calendarEvents;
       if (events.length === 0) {
         container.innerHTML = `<div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 text-center"><i class="fa-regular fa-calendar text-4xl text-zinc-700 mb-4"></i><div class="text-xl text-zinc-400">No events scheduled</div></div>`;
         return;
@@ -128,15 +137,16 @@
       });
     }
 
-    function renderTasks(listId, tasks) {
+    function renderTasks(listId, tasksInput) {
+      ensureArrays();
       const container = document.getElementById(listId);
       container.innerHTML = '';
-      const taskList = tasks || [];
-      if (taskList.length === 0) {
+      const tasks = tasksInput || [];
+      if (tasks.length === 0) {
         container.innerHTML = `<div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 text-center"><i class="fa-regular fa-check-circle text-4xl text-emerald-700 mb-4"></i><div class="text-xl text-zinc-400">All caught up — nice work</div></div>`;
         return;
       }
-      taskList.forEach(task => {
+      tasks.forEach(task => {
         const div = document.createElement('div');
         div.className = `task-row bg-zinc-900 border border-zinc-800 rounded-3xl px-7 py-5 flex items-center gap-x-5`;
         const dueHTML = task.isToday ? `<span class="px-3.5 py-1 text-xs font-medium tracking-wider rounded-2xl bg-emerald-500/10 text-emerald-400">TODAY</span>` : `<span class="px-3.5 py-1 text-xs font-medium tracking-wider rounded-2xl bg-zinc-800 text-zinc-400">${task.dueLabel}</span>`;
@@ -146,6 +156,7 @@
     }
 
     function renderCurrentScreen() {
+      ensureArrays();
       document.querySelectorAll('.dashboard-screen').forEach(el => el.classList.add('hidden'));
       document.getElementById(`screen-${currentScreen}`).classList.remove('hidden');
       const titles = ['Calendar', 'My Tasks', 'BuilderTrend Tasks'];
