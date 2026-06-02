@@ -1,0 +1,218 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2868
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww28600\viewh26360\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 <!DOCTYPE html>\
+<html lang="en">\
+<head>\
+  <meta charset="UTF-8">\
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">\
+  <title>Five Development \'95 Daily Dashboard</title>\
+  <script src="https://cdn.tailwindcss.com"></script>\
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">\
+  <style>\
+    body \{ font-family: 'Inter', system-ui, sans-serif; \}\
+    .section-header \{ font-size: 2.1rem; line-height: 2.4rem; font-weight: 700; letter-spacing: -.04em; \}\
+    .dashboard-screen \{ transition: opacity 400ms ease, transform 400ms ease; \}\
+    .event-row, .task-row \{ transition: all 0.2s ease; \}\
+  </style>\
+</head>\
+<body class="bg-zinc-950 text-zinc-200">\
+  <!-- Top Bar -->\
+  <div class="border-b border-zinc-800 bg-zinc-900/70 backdrop-blur sticky top-0 z-50">\
+    <div class="max-w-screen-2xl mx-auto px-8 py-5 flex items-center justify-between">\
+      <div class="flex items-center gap-x-4">\
+        <div class="flex items-center gap-x-3">\
+          <div class="w-9 h-9 bg-blue-600 rounded-2xl flex items-center justify-center">\
+            <i class="fa-solid fa-hard-hat text-white text-2xl"></i>\
+          </div>\
+          <div>\
+            <div class="font-semibold tracking-tight text-2xl">Five Development</div>\
+            <div class="text-[10px] text-zinc-500 -mt-1">FOUNDATIONAL FIVE</div>\
+          </div>\
+        </div>\
+      </div>\
+\
+      <div class="flex items-center gap-x-8">\
+        <div class="text-right">\
+          <div id="live-time" class="font-mono text-4xl font-semibold tracking-tighter"></div>\
+          <div id="live-date" class="text-xs text-zinc-500 tracking-[1px]"></div>\
+        </div>\
+      </div>\
+    </div>\
+  </div>\
+\
+  <div class="max-w-screen-2xl mx-auto px-8 pt-6 pb-12">\
+    <div class="flex items-end justify-between mb-6">\
+      <div>\
+        <div id="screen-title" class="section-header text-white"></div>\
+        <div class="text-zinc-500 text-sm mt-1 flex items-center gap-x-2">\
+          <i class="fa-solid fa-sync fa-sm"></i>\
+          <span>Auto-rotating every 30 seconds \'95 Updates every 10 minutes</span>\
+        </div>\
+      </div>\
+      \
+      <div class="flex items-center gap-x-2" id="screen-dots">\
+        <div onclick="switchToScreen(0)" class="w-3 h-3 rounded-full bg-white cursor-pointer transition-all" data-screen="0"></div>\
+        <div onclick="switchToScreen(1)" class="w-3 h-3 rounded-full bg-zinc-700 hover:bg-zinc-600 cursor-pointer transition-all" data-screen="1"></div>\
+        <div onclick="switchToScreen(2)" class="w-3 h-3 rounded-full bg-zinc-700 hover:bg-zinc-600 cursor-pointer transition-all" data-screen="2"></div>\
+      </div>\
+    </div>\
+\
+    <!-- SCREEN 1: Calendar -->\
+    <div id="screen-0" class="dashboard-screen">\
+      <div class="grid grid-cols-1 gap-3" id="calendar-list"></div>\
+    </div>\
+\
+    <!-- SCREEN 2: My Tasks -->\
+    <div id="screen-1" class="dashboard-screen hidden">\
+      <div class="grid grid-cols-1 gap-3" id="mytasks-list"></div>\
+    </div>\
+\
+    <!-- SCREEN 3: BuilderTrend Tasks -->\
+    <div id="screen-2" class="dashboard-screen hidden">\
+      <div class="grid grid-cols-1 gap-3" id="buildertrend-list"></div>\
+    </div>\
+  </div>\
+\
+  <script>\
+    const WEBHOOK_URL = "https://fivedevelopment.app.n8n.cloud/webhook/dashboard-data"; // \uc0\u8592  Change to your production URL later\
+\
+    let currentScreen = 0;\
+    let rotationInterval = null;\
+    let dataRefreshInterval = null;\
+    let dashboardData = \{ calendarEvents: [], myTasks: [], buildertrendTasks: [] \};\
+\
+    function updateClock() \{\
+      const now = new Date();\
+      document.getElementById('live-time').textContent = now.toLocaleTimeString('en-US', \{\
+        timeZone: 'America/Chicago', hour: 'numeric', minute: '2-digit', hour12: true\
+      \});\
+      document.getElementById('live-date').textContent = now.toLocaleDateString('en-US', \{\
+        timeZone: 'America/Chicago', weekday: 'long', month: 'long', day: 'numeric'\
+      \});\
+    \}\
+\
+    async function fetchData() \{\
+      try \{\
+        const res = await fetch(WEBHOOK_URL);\
+        if (!res.ok) throw new Error('Webhook error');\
+        dashboardData = await res.json();\
+        renderCurrentScreen();\
+      \} catch (err) \{\
+        console.error('Failed to fetch data:', err);\
+      \}\
+    \}\
+\
+    function renderCalendar() \{\
+      const container = document.getElementById('calendar-list');\
+      container.innerHTML = '';\
+\
+      if (!dashboardData.calendarEvents || dashboardData.calendarEvents.length === 0) \{\
+        container.innerHTML = `<div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 text-center">\
+          <i class="fa-regular fa-calendar text-4xl text-zinc-700 mb-4"></i>\
+          <div class="text-xl text-zinc-400">No events scheduled</div></div>`;\
+        return;\
+      \}\
+\
+      const colorMap = \{ '1':'#6366f1','2':'#22c55e','3':'#a855f7','4':'#f43f5e','5':'#eab308','6':'#f97316','7':'#0ea5e9','8':'#64748b','9':'#3b82f6','10':'#10b981','11':'#ef4444' \};\
+\
+      dashboardData.calendarEvents.forEach(event => \{\
+        const accent = colorMap[event.colorId] || '#64748b';\
+        const div = document.createElement('div');\
+        div.className = `event-row bg-zinc-900 border border-zinc-800 rounded-3xl px-7 py-5 flex items-center gap-x-5`;\
+        div.innerHTML = `\
+          <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color:$\{accent\}"></div>\
+          <div class="flex-1 min-w-0">\
+            <div class="font-semibold text-2xl tracking-tight text-white">$\{event.title\}</div>\
+          </div>\
+          <div class="text-right flex-shrink-0">\
+            <div class="font-mono text-lg text-zinc-400">$\{event.timeframe\}</div>\
+          </div>`;\
+        container.appendChild(div);\
+      \});\
+    \}\
+\
+    function renderTasks(listId, tasks) \{\
+      const container = document.getElementById(listId);\
+      container.innerHTML = '';\
+\
+      if (!tasks || tasks.length === 0) \{\
+        container.innerHTML = `<div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 text-center">\
+          <i class="fa-regular fa-check-circle text-4xl text-emerald-700 mb-4"></i>\
+          <div class="text-xl text-zinc-400">All caught up \'97 nice work</div></div>`;\
+        return;\
+      \}\
+\
+      tasks.forEach(task => \{\
+        const div = document.createElement('div');\
+        div.className = `task-row bg-zinc-900 border border-zinc-800 rounded-3xl px-7 py-5 flex items-center gap-x-5`;\
+        const dueHTML = task.isToday \
+          ? `<span class="px-3.5 py-1 text-xs font-medium tracking-wider rounded-2xl bg-emerald-500/10 text-emerald-400">TODAY</span>`\
+          : `<span class="px-3.5 py-1 text-xs font-medium tracking-wider rounded-2xl bg-zinc-800 text-zinc-400">$\{task.dueLabel\}</span>`;\
+        div.innerHTML = `\
+          <div class="flex-1 min-w-0"><div class="font-semibold text-2xl tracking-tight text-white">$\{task.title\}</div></div>\
+          <div class="flex-shrink-0">$\{dueHTML\}</div>`;\
+        container.appendChild(div);\
+      \});\
+    \}\
+\
+    function renderCurrentScreen() \{\
+      document.querySelectorAll('.dashboard-screen').forEach(el => el.classList.add('hidden'));\
+      const active = document.getElementById(`screen-$\{currentScreen\}`);\
+      if (active) active.classList.remove('hidden');\
+\
+      const titles = ['Calendar', 'My Tasks', 'BuilderTrend Tasks'];\
+      document.getElementById('screen-title').textContent = titles[currentScreen];\
+\
+      if (currentScreen === 0) renderCalendar();\
+      if (currentScreen === 1) renderTasks('mytasks-list', dashboardData.myTasks);\
+      if (currentScreen === 2) renderTasks('buildertrend-list', dashboardData.buildertrendTasks);\
+\
+      document.querySelectorAll('#screen-dots > div').forEach((dot, idx) => \{\
+        dot.classList.toggle('bg-white', idx === currentScreen);\
+        dot.classList.toggle('scale-125', idx === currentScreen);\
+        dot.classList.toggle('bg-zinc-700', idx !== currentScreen);\
+      \});\
+    \}\
+\
+    function switchToScreen(index) \{\
+      currentScreen = index;\
+      renderCurrentScreen();\
+    \}\
+\
+    function startRotation() \{\
+      if (rotationInterval) clearInterval(rotationInterval);\
+      rotationInterval = setInterval(() => \{\
+        currentScreen = (currentScreen + 1) % 3;\
+        renderCurrentScreen();\
+      \}, 30000);\
+    \}\
+\
+    function startAutoRefresh() \{\
+      if (dataRefreshInterval) clearInterval(dataRefreshInterval);\
+      dataRefreshInterval = setInterval(fetchData, 10 * 60 * 1000);\
+    \}\
+\
+    async function initDashboard() \{\
+      updateClock();\
+      setInterval(updateClock, 30000);\
+      await fetchData();\
+      currentScreen = 0;\
+      renderCurrentScreen();\
+      startRotation();\
+      startAutoRefresh();\
+    \}\
+\
+    document.addEventListener('keydown', (e) => \{\
+      if (e.key === 'ArrowRight') \{ currentScreen = (currentScreen + 1) % 3; renderCurrentScreen(); \}\
+      if (e.key === 'ArrowLeft') \{ currentScreen = (currentScreen - 1 + 3) % 3; renderCurrentScreen(); \}\
+    \});\
+\
+    window.onload = initDashboard;\
+  </script>\
+</body>\
+</html>}
