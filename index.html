@@ -38,6 +38,7 @@
 </head>
 <body class="moving-ambient-bg text-zinc-200 min-h-screen">
   
+  <!-- Top Bar -->
   <div class="border-b border-zinc-900/60 bg-zinc-950/40 backdrop-blur sticky top-0 z-50 burn-protected-header">
     <div class="max-w-screen-2xl mx-auto px-8 py-3 flex items-center justify-between">
       <div class="flex items-center gap-x-4">
@@ -77,36 +78,51 @@
       </div>
     </div>
 
+    <!-- SCREEN 1: Calendar -->
     <div id="screen-0" class="dashboard-screen">
       <div class="grid grid-cols-1 gap-2.5" id="calendar-list"></div>
     </div>
 
+    <!-- SCREEN 2: My Tasks -->
     <div id="screen-1" class="dashboard-screen hidden">
       <div class="grid grid-cols-1 gap-2.5" id="mytasks-list"></div>
     </div>
 
+    <!-- SCREEN 3: BuilderTrend Tasks -->
     <div id="screen-2" class="dashboard-screen hidden">
       <div class="grid grid-cols-1 gap-2.5" id="buildertrend-list"></div>
     </div>
 
+    <!-- SCREEN 4: Goals Layout -->
     <div id="screen-3" class="dashboard-screen hidden">
       <div class="grid grid-cols-[140px_1fr_1fr] gap-x-5 gap-y-3.5 items-center" id="goals-matrix-container"></div>
     </div>
 
-    <div id="screen-4" class="dashboard-screen hidden">
+    <!-- SCREEN 5: Projections Layout -->
+    <div id="screen-4" class="dashboard-screen hidden flex flex-col gap-y-6">
+      <!-- Top 3 Columns -->
       <div class="grid grid-cols-3 gap-5">
+        <!-- Active Column -->
         <div>
           <div class="text-blue-400 font-bold text-xl tracking-wide uppercase border-b border-zinc-900/80 pb-2 mb-3"><i class="fa-solid fa-bolt fa-sm mr-2"></i>Active Jobs</div>
           <div class="grid grid-cols-1 gap-2.5" id="projections-active-list"></div>
         </div>
+        <!-- Preparation Column -->
         <div>
           <div class="text-amber-500/90 font-bold text-xl tracking-wide uppercase border-b border-zinc-900/80 pb-2 mb-3"><i class="fa-solid fa-sliders fa-sm mr-2"></i>Preparation</div>
           <div class="grid grid-cols-1 gap-2.5" id="projections-prep-list"></div>
         </div>
+        <!-- Pipeline Column -->
         <div>
           <div class="text-zinc-400 font-bold text-xl tracking-wide uppercase border-b border-zinc-900/80 pb-2 mb-3"><i class="fa-solid fa-gavel fa-sm mr-2"></i>Pipeline Prospect</div>
           <div class="grid grid-cols-1 gap-2.5" id="projections-pipe-list"></div>
         </div>
+      </div>
+
+      <!-- Bottom Full-Width Row Column (Stage 1 Leads) -->
+      <div class="mt-2">
+        <div class="text-emerald-500/90 font-bold text-xl tracking-wide uppercase border-b border-zinc-900/80 pb-2 mb-3"><i class="fa-solid fa-address-book fa-sm mr-2"></i>Leads & Inquiries</div>
+        <div class="grid grid-cols-4 gap-4" id="projections-leads-list"></div>
       </div>
     </div>
   </div>
@@ -122,7 +138,7 @@
       myTasks: [], 
       buildertrendTasks: [], 
       goals: { month: [], quarter: [], monthRevenue: '—', quarterRevenue: '—' },
-      projections: { months: [], active: [], preparation: [], pipeline: [] }
+      projections: { months: [], active: [], preparation: [], pipeline: [], leads: [] }
     };
 
     function updateClock() {
@@ -154,7 +170,7 @@
             myTasks: raw.myTasks || [],
             buildertrendTasks: raw.buildertrendTasks || [],
             goals: raw.goals || { month: [], quarter: [], monthRevenue: '—', quarterRevenue: '—' },
-            projections: raw.projections || { months: [], active: [], preparation: [], pipeline: [] },
+            projections: raw.projections || { months: [], active: [], preparation: [], pipeline: [], leads: [] },
             lastUpdated: raw.lastUpdated || new Date().toISOString()
           };
           renderCurrentScreen();
@@ -332,10 +348,35 @@
     };
 
     function renderProjections() {
-      var dataset = dashboardData.projections || { active: [], preparation: [], pipeline: [] };
+      var dataset = dashboardData.projections || { active: [], preparation: [], pipeline: [], leads: [] };
+      
+      // Render standard 3-month rolling tracks
       populateProjectionColumn('projections-active-list', dataset.active);
       populateProjectionColumn('projections-prep-list', dataset.preparation);
       populateProjectionColumn('projections-pipe-list', dataset.pipeline);
+      
+      // Render bottom horizontal leads block safely
+      var leadsContainer = document.getElementById('projections-leads-list');
+      if (!leadsContainer) return;
+      leadsContainer.innerHTML = '';
+      
+      var leadsItems = dataset.leads || [];
+      if (leadsItems.length === 0) {
+        leadsContainer.innerHTML = '<div class="col-span-4 bg-zinc-900/20 border border-zinc-900/40 border-dashed rounded-xl p-4 text-center text-zinc-600 text-sm font-medium">No active pending leads</div>';
+        return;
+      }
+      
+      for (var i = 0; i < leadsItems.length; i++) {
+        var lead = leadsItems[i];
+        var card = document.createElement('div');
+        card.className = 'projection-card bg-zinc-950/40 border border-zinc-900/80 rounded-xl p-3.5 shadow-sm flex items-center justify-between gap-x-4 backdrop-blur-sm';
+        
+        card.innerHTML = 
+          '<div class="text-zinc-200 font-bold text-base truncate flex-1 min-w-0">' + lead.address + '</div>' +
+          '<div class="text-emerald-400 font-bold text-base flex-shrink-0 tracking-tight">' + (lead.totalValueE > 0 ? formatCurrency(lead.totalValueE) : '—') + '</div>';
+        
+        leadsContainer.appendChild(card);
+      }
     }
 
     function renderCurrentScreen() {
