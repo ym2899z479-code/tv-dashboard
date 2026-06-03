@@ -143,12 +143,30 @@
 
     function updateClock() {
       var now = new Date();
-      document.getElementById('live-time').textContent = now.toLocaleTimeString('en-US', {
-        timeZone: 'America/Chicago', hour: 'numeric', minute: '2-digit', hour12: true
-      });
-      document.getElementById('live-date').textContent = now.toLocaleDateString('en-US', {
-        timeZone: 'America/Chicago', weekday: 'long', month: 'long', day: 'numeric'
-      });
+      var timeStr = "";
+      var dateStr = "";
+      
+      // CRITICAL: Protect the execution layout from timezone parsing failures in old webviews
+      try {
+        timeStr = now.toLocaleTimeString('en-US', {
+          timeZone: 'America/Chicago', hour: 'numeric', minute: '2-digit', hour12: true
+        });
+        dateStr = now.toLocaleDateString('en-US', {
+          timeZone: 'America/Chicago', weekday: 'long', month: 'long', day: 'numeric'
+        });
+      } catch(e) {
+        var hours = now.getHours();
+        var minutes = now.getMinutes();
+        var ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        timeStr = hours + ':' + minutes + ' ' + ampm;
+        dateStr = now.toDateString();
+      }
+      
+      document.getElementById('live-time').textContent = timeStr;
+      document.getElementById('live-date').textContent = dateStr;
     }
 
     function formatCurrency(val) {
@@ -159,23 +177,29 @@
     }
 
     function fetchData() {
-      fetch(WEBHOOK_URL)
-        .then(function(res) {
-          if (!res.ok) throw new Error('HTTP error');
-          return res.json();
-        })
-        .then(function(raw) {
-          dashboardData.calendarEvents = raw.calendarEvents || [];
-          dashboardData.myTasks = raw.myTasks || [];
-          dashboardData.buildertrendTasks = raw.buildertrendTasks || [];
-          dashboardData.goals = raw.goals || { month: [], quarter: [], monthRevenue: '—', quarterRevenue: '—' };
-          dashboardData.projections = raw.projections || { months: [], active: [], preparation: [], pipeline: [], leads: [] };
+      // FIXED: Migrated from fetch() API to native, highly compatible XMLHttpRequest
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", WEBHOOK_URL, true);
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+          if (xhr.status === 200) {
+            try {
+              var raw = JSON.parse(xhr.responseText);
+              dashboardData.calendarEvents = raw.calendarEvents || [];
+              dashboardData.myTasks = raw.myTasks || [];
+              dashboardData.buildertrendTasks = raw.buildertrendTasks || [];
+              dashboardData.goals = raw.goals || { month: [], quarter: [], monthRevenue: '—', quarterRevenue: '—' };
+              dashboardData.projections = raw.projections || { months: [], active: [], preparation: [], pipeline: [], leads: [] };
+            } catch(e) {
+              console.error("Data parse failure:", e);
+            }
+          } else {
+            console.error("Server connection failure status: " + xhr.status);
+          }
           renderCurrentScreen();
-        })
-        .catch(function(err) {
-          console.error("Failed to load data:", err);
-          renderCurrentScreen();
-        });
+        }
+      };
+      xhr.send();
     }
 
     function renderCalendar() {
@@ -254,7 +278,12 @@
 
     function renderGoals() {
       var now = new Date();
-      var monthStr = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      var monthStr = "";
+      try {
+        monthStr = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'America/Chicago' });
+      } catch(e) {
+        monthStr = "Current Month";
+      }
       
       var quarterNum = Math.floor((now.getMonth() + 3) / 3);
       var suffixes = ["th", "st", "nd", "rd", "th"];
@@ -278,7 +307,7 @@
         lbl.textContent = 'Goal ' + (i + 1) + ':';
         matrix.appendChild(lbl);
 
-        /* TIGHTENED TIER 1: Shrunk inner padding to p-1.5 and collapsed min-h constraints down to 38px */
+        /* TIGHTENED COMPACT TIERS: p-1.5 and min-h-38px layouts ensures the panel scales inside the bottom layout fold */
         var mCell = document.createElement('div');
         mCell.className = "goal-card bg-zinc-900/40 border border-zinc-800/50 rounded-xl p-1.5 min-h-[38px] flex items-center justify-center text-center shadow-md backdrop-blur-sm";
         mCell.innerHTML = '<div class="text-zinc-200 text-sm font-semibold tracking-tight leading-tight">' + mText + '</div>';
@@ -295,7 +324,6 @@
       revLabel.innerHTML = '<i class="fa-solid fa-chart-line mr-1"></i> Revenue:';
       matrix.appendChild(revLabel);
 
-      /* TIGHTENED TIER 1: Removed heavy margins and minimized padding layout to draw target revenue onto screen footprint */
       var mRevCell = document.createElement('div');
       mRevCell.className = "goal-card border border-emerald-900/30 rounded-xl p-1.5 flex items-center justify-center text-center shadow-md backdrop-blur-sm mt-1";
       mRevCell.style.background = 'linear-gradient(90deg, rgba(16,185,129,0.04) 0%, rgba(0,0,0,0) 100%)';
@@ -324,7 +352,7 @@
       for (var i = 0; i < items.length; i++) {
         var job = items[i];
         var card = document.createElement('div');
-        /* TIGHTENED TIER 2: Shrunk projection card boundaries down to p-1.5 and condensed vertical layout gaps to 0.5 */
+        /* TIGHTENED COMPACT TIERS: Compress spacing elements down to p-1.5 and gap-y-0.5 profiles */
         card.className = 'projection-card bg-zinc-950/40 border border-zinc-900/80 rounded-xl p-1.5 shadow-sm flex flex-col gap-y-0.5 backdrop-blur-sm';
         
         card.innerHTML = 
@@ -367,7 +395,6 @@
       for (var i = 0; i < leadsItems.length; i++) {
         var lead = leadsItems[i];
         var card = document.createElement('div');
-        /* TIGHTENED TIER 2: Tightened horizontal inquiry cards to a super compact p-1.5 footprint layout */
         card.className = 'projection-card bg-zinc-950/40 border border-zinc-900/80 rounded-xl p-1.5 shadow-sm flex items-center justify-between gap-x-3 backdrop-blur-sm';
         
         card.innerHTML = 
