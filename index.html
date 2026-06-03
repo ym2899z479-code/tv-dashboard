@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Five Development • Daily Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link class="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
     body { font-family: 'Inter', system-ui, sans-serif; }
     .section-header { font-size: 1.8rem; line-height: 2.1rem; font-weight: 700; letter-spacing: -.04em; }
@@ -93,36 +93,36 @@
       <div class="grid grid-cols-1 gap-2.5" id="buildertrend-list"></div>
     </div>
 
-    <!-- SCREEN 4: Goals Layout (COMPACTED VERTICAL ROW GAP TO G-2) -->
+    <!-- SCREEN 4: Goals Layout -->
     <div id="screen-3" class="dashboard-screen hidden">
       <div class="grid grid-cols-[140px_1fr_1fr] gap-x-5 gap-y-2 items-center" id="goals-matrix-container"></div>
     </div>
 
-    <!-- SCREEN 5: Projections Layout (COMPACTED VERTICAL ROW GAP TO G-4) -->
+    <!-- SCREEN 5: Projections Layout -->
     <div id="screen-4" class="dashboard-screen hidden flex flex-col gap-y-4">
-      <!-- Top 3 Columns -->
+      <!-- Top 3 Vertical Columns Layout -->
       <div class="grid grid-cols-3 gap-5">
-        <!-- Active Column -->
+        <!-- Active Column (Left) -->
         <div>
           <div class="text-blue-400 font-bold text-xl tracking-wide uppercase border-b border-zinc-900/80 pb-1.5 mb-2.5"><i class="fa-solid fa-bolt fa-sm mr-2"></i>Active Jobs</div>
           <div class="grid grid-cols-1 gap-2" id="projections-active-list"></div>
         </div>
-        <!-- Preparation Column -->
-        <div>
-          <div class="text-amber-500/90 font-bold text-xl tracking-wide uppercase border-b border-zinc-900/80 pb-1.5 mb-2.5"><i class="fa-solid fa-sliders fa-sm mr-2"></i>Preparation</div>
-          <div class="grid grid-cols-1 gap-2" id="projections-prep-list"></div>
-        </div>
-        <!-- Pipeline Column -->
+        <!-- Pipeline Prospect Column (Middle) -->
         <div>
           <div class="text-zinc-400 font-bold text-xl tracking-wide uppercase border-b border-zinc-900/80 pb-1.5 mb-2.5"><i class="fa-solid fa-gavel fa-sm mr-2"></i>Pipeline Prospect</div>
           <div class="grid grid-cols-1 gap-2" id="projections-pipe-list"></div>
         </div>
+        <!-- Leads & Inquiries Column (Right) -->
+        <div>
+          <div class="text-emerald-400 font-bold text-xl tracking-wide uppercase border-b border-zinc-900/80 pb-1.5 mb-2.5"><i class="fa-solid fa-address-book fa-sm mr-2"></i>Leads & Inquiries</div>
+          <div class="grid grid-cols-1 gap-2" id="projections-leads-list"></div>
+        </div>
       </div>
 
-      <!-- Bottom Full-Width Leads Grid -->
+      <!-- Preparation Column (Bottom Full-Width Row Grid) -->
       <div class="mt-1">
-        <div class="text-emerald-400 font-bold text-xl tracking-wide uppercase border-b border-zinc-900/80 pb-1.5 mb-2.5"><i class="fa-solid fa-address-book fa-sm mr-2"></i>Leads & Inquiries</div>
-        <div class="grid grid-cols-4 gap-3" id="projections-leads-list"></div>
+        <div class="text-amber-500/90 font-bold text-xl tracking-wide uppercase border-b border-zinc-900/80 pb-1.5 mb-2.5"><i class="fa-solid fa-sliders fa-sm mr-2"></i>Preparation</div>
+        <div class="grid grid-cols-4 gap-3" id="projections-prep-list"></div>
       </div>
     </div>
   </div>
@@ -146,7 +146,6 @@
       var timeStr = "";
       var dateStr = "";
       
-      // CRITICAL: Protect the execution layout from timezone parsing failures in old webviews
       try {
         timeStr = now.toLocaleTimeString('en-US', {
           timeZone: 'America/Chicago', hour: 'numeric', minute: '2-digit', hour12: true
@@ -177,7 +176,6 @@
     }
 
     function fetchData() {
-      // FIXED: Migrated from fetch() API to native, highly compatible XMLHttpRequest
       var xhr = new XMLHttpRequest();
       xhr.open("GET", WEBHOOK_URL, true);
       xhr.onreadystatechange = function() {
@@ -193,8 +191,6 @@
             } catch(e) {
               console.error("Data parse failure:", e);
             }
-          } else {
-            console.error("Server connection failure status: " + xhr.status);
           }
           renderCurrentScreen();
         }
@@ -307,7 +303,6 @@
         lbl.textContent = 'Goal ' + (i + 1) + ':';
         matrix.appendChild(lbl);
 
-        /* TIGHTENED COMPACT TIERS: p-1.5 and min-h-38px layouts ensures the panel scales inside the bottom layout fold */
         var mCell = document.createElement('div');
         mCell.className = "goal-card bg-zinc-900/40 border border-zinc-800/50 rounded-xl p-1.5 min-h-[38px] flex items-center justify-center text-center shadow-md backdrop-blur-sm";
         mCell.innerHTML = '<div class="text-zinc-200 text-sm font-semibold tracking-tight leading-tight">' + mText + '</div>';
@@ -345,14 +340,14 @@
       container.innerHTML = '';
       
       if (!items || items.length === 0) {
-        container.innerHTML = '<div class="bg-zinc-900/20 border border-zinc-900/40 border-dashed rounded-xl p-3 text-center text-zinc-600 text-xs font-medium">No tracks active</div>';
+        var spanClass = (elementId === 'projections-prep-list') ? 'col-span-4 ' : '';
+        container.innerHTML = '<div class="' + spanClass + 'bg-zinc-900/20 border border-zinc-900/40 border-dashed rounded-xl p-3 text-center text-zinc-600 text-xs font-medium">No tracks active</div>';
         return;
       }
 
       for (var i = 0; i < items.length; i++) {
         var job = items[i];
         var card = document.createElement('div');
-        /* TIGHTENED COMPACT TIERS: Compress spacing elements down to p-1.5 and gap-y-0.5 profiles */
         card.className = 'projection-card bg-zinc-950/40 border border-zinc-900/80 rounded-xl p-1.5 shadow-sm flex flex-col gap-y-0.5 backdrop-blur-sm';
         
         card.innerHTML = 
@@ -378,24 +373,26 @@
     function renderProjections() {
       var dataset = dashboardData.projections || { active: [], preparation: [], pipeline: [], leads: [] };
       
+      // Render columns and rows matching your new blueprint structure
       populateProjectionColumn('projections-active-list', dataset.active);
-      populateProjectionColumn('projections-prep-list', dataset.preparation);
       populateProjectionColumn('projections-pipe-list', dataset.pipeline);
+      populateProjectionColumn('projections-prep-list', dataset.preparation); // Spans full-width bottom row now!
       
+      // Render Leads & Inquiries directly into a compact column list on the right
       var leadsContainer = document.getElementById('projections-leads-list');
       if (!leadsContainer) return;
       leadsContainer.innerHTML = '';
       
       var leadsItems = dataset.leads || [];
       if (leadsItems.length === 0) {
-        leadsContainer.innerHTML = '<div class="col-span-4 bg-zinc-900/20 border border-zinc-900/40 border-dashed rounded-xl p-3 text-center text-zinc-600 text-xs font-medium">No active pending leads</div>';
+        leadsContainer.innerHTML = '<div class="bg-zinc-900/20 border border-zinc-900/40 border-dashed rounded-xl p-3 text-center text-zinc-600 text-xs font-medium">No active pending leads</div>';
         return;
       }
       
       for (var i = 0; i < leadsItems.length; i++) {
         var lead = leadsItems[i];
         var card = document.createElement('div');
-        card.className = 'projection-card bg-zinc-950/40 border border-zinc-900/80 rounded-xl p-1.5 shadow-sm flex items-center justify-between gap-x-3 backdrop-blur-sm';
+        card.className = 'projection-card bg-zinc-950/40 border border-zinc-900/80 rounded-xl p-1.5 shadow-sm flex items-center justify-between gap-x-2 backdrop-blur-sm mb-2';
         
         card.innerHTML = 
           '<div class="text-zinc-200 font-bold text-xs truncate flex-1 min-w-0">' + lead.address + '</div>' +
