@@ -38,6 +38,7 @@
 </head>
 <body class="moving-ambient-bg text-zinc-200 min-h-screen">
   
+  <!-- Top Bar -->
   <div class="border-b border-zinc-900/60 bg-zinc-950/40 backdrop-blur sticky top-0 z-50 burn-protected-header">
     <div class="max-w-screen-2xl mx-auto px-8 py-3 flex items-center justify-between">
       <div class="flex items-center gap-x-4">
@@ -77,32 +78,40 @@
       </div>
     </div>
 
+    <!-- SCREEN 1: Calendar -->
     <div id="screen-0" class="dashboard-screen">
       <div class="grid grid-cols-1 gap-2.5" id="calendar-list"></div>
     </div>
 
+    <!-- SCREEN 2: My Tasks -->
     <div id="screen-1" class="dashboard-screen hidden">
       <div class="grid grid-cols-1 gap-2.5" id="mytasks-list"></div>
     </div>
 
+    <!-- SCREEN 3: BuilderTrend Tasks -->
     <div id="screen-2" class="dashboard-screen hidden">
       <div class="grid grid-cols-1 gap-2.5" id="buildertrend-list"></div>
     </div>
 
+    <!-- SCREEN 4: Goals Layout -->
     <div id="screen-3" class="dashboard-screen hidden">
       <div class="grid grid-cols-[140px_1fr_1fr] gap-x-5 gap-y-3.5 items-center" id="goals-matrix-container"></div>
     </div>
 
+    <!-- SCREEN 5: 3-Column Revenue Forecast Layout -->
     <div id="screen-4" class="dashboard-screen hidden">
       <div class="grid grid-cols-3 gap-5">
+        <!-- Active Track Column -->
         <div>
           <div class="text-blue-400 font-bold text-base tracking-widest uppercase border-b border-zinc-900/80 pb-2 mb-3"><i class="fa-solid fa-bolt fa-sm mr-2"></i>Active Jobs</div>
           <div class="grid grid-cols-1 gap-2.5" id="projections-active-list"></div>
         </div>
+        <!-- Preparation Track Column -->
         <div>
           <div class="text-amber-500/90 font-bold text-base tracking-widest uppercase border-b border-zinc-900/80 pb-2 mb-3"><i class="fa-solid fa-sliders fa-sm mr-2"></i>Preparation</div>
           <div class="grid grid-cols-1 gap-2.5" id="projections-prep-list"></div>
         </div>
+        <!-- Pipeline Track Column -->
         <div>
           <div class="text-zinc-400 font-bold text-base tracking-widest uppercase border-b border-zinc-900/80 pb-2 mb-3"><i class="fa-solid fa-gavel fa-sm mr-2"></i>Pipeline Prospect</div>
           <div class="grid grid-cols-1 gap-2.5" id="projections-pipe-list"></div>
@@ -178,7 +187,8 @@
       
       var colorMap = {'1':'#6366f1','2':'#22c55e','3':'#a855f7','4':'#f43f5e','5':'#eab308','6':'#f97316','7':'#0ea5e9','8':'#64748b','9':'#3b82f6','10':'#10b981','11':'#ef4444'};
       
-      events.forEach(function(event) {
+      for (var i = 0; i < events.length; i++) {
+        var event = events[i];
         var accent = colorMap[event.colorId] || '#3b82f6';
         var div = document.createElement('div');
         div.className = 'event-row border border-zinc-800/40 rounded-xl py-3.5 px-5 flex items-center gap-x-4 transition-all shadow-md';
@@ -193,7 +203,7 @@
             '</div>' +
           '</div>';
         container.appendChild(div);
-      });
+      }
     }
 
     function renderTasks(listId, tasksInput) {
@@ -206,7 +216,8 @@
         return;
       }
       
-      tasks.forEach(function(task) {
+      for (var i = 0; i < tasks.length; i++) {
+        var task = tasks[i];
         var div = document.createElement('div');
         div.className = 'task-row bg-zinc-900/40 border border-zinc-800/50 rounded-xl px-5 py-3.5 flex items-center justify-between gap-x-4 transition-all shadow-sm backdrop-blur-sm';
         
@@ -233,7 +244,7 @@
           '</div>' +
           '<div class="flex-shrink-0">' + dueHTML + '</div>';
         container.appendChild(div);
-      });
+      }
     }
 
     function renderGoals() {
@@ -344,12 +355,13 @@
       var titles = ['Calendar', 'My Tasks', 'BuilderTrend Tasks', 'Goals', 'Projections'];
       document.getElementById('screen-title').textContent = titles[currentScreen];
       
+      // FIXED: Swapped out dot .forEach loop for standard legacy loop structure
       var dots = document.querySelectorAll('#screen-dots > div');
-      dots.forEach(function(dot, idx) {
-        dot.className = idx === currentScreen 
+      for (var d = 0; d < dots.length; d++) {
+        dots[d].className = d === currentScreen 
           ? "w-2.5 h-2.5 rounded-full bg-zinc-300 cursor-pointer transition-all" 
           : "w-2.5 h-2.5 rounded-full bg-zinc-800 hover:bg-zinc-700 cursor-pointer transition-all";
-      });
+      }
 
       if (currentScreen === 0) renderCalendar();
       if (currentScreen === 1) renderTasks('mytasks-list', dashboardData.myTasks);
