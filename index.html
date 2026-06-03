@@ -90,7 +90,7 @@
     </div>
 
     <div id="screen-3" class="dashboard-screen hidden">
-      <div class="grid grid-cols-[150px_1fr_1fr] gap-x-5 gap-y-3.5 items-center" id="goals-matrix-container"></div>
+      <div class="grid grid-cols-[140px_1fr_1fr] gap-x-5 gap-y-3.5 items-center" id="goals-matrix-container"></div>
     </div>
 
     <div id="screen-4" class="dashboard-screen hidden">
@@ -157,7 +157,6 @@
             projections: raw.projections || { months: [], active: [], preparation: [], pipeline: [] },
             lastUpdated: raw.lastUpdated || new Date().toISOString()
           };
-          console.log("Data loaded successfully");
           renderCurrentScreen();
         })
         .catch(function(err) {
@@ -179,7 +178,8 @@
       
       var colorMap = {'1':'#6366f1','2':'#22c55e','3':'#a855f7','4':'#f43f5e','5':'#eab308','6':'#f97316','7':'#0ea5e9','8':'#64748b','9':'#3b82f6','10':'#10b981','11':'#ef4444'};
       
-      events.forEach(function(event) {
+      for (var i = 0; i < events.length; i++) {
+        var event = events[i];
         var accent = colorMap[event.colorId] || '#3b82f6';
         var div = document.createElement('div');
         div.className = 'event-row border border-zinc-800/40 rounded-xl py-3.5 px-5 flex items-center gap-x-4 transition-all shadow-md';
@@ -194,7 +194,7 @@
             '</div>' +
           '</div>';
         container.appendChild(div);
-      });
+      }
     }
 
     function renderTasks(listId, tasksInput) {
@@ -208,7 +208,8 @@
         return;
       }
       
-      tasks.forEach(function(task) {
+      for (var i = 0; i < tasks.length; i++) {
+        var task = tasks[i];
         var div = document.createElement('div');
         div.className = 'task-row bg-zinc-900/40 border border-zinc-800/50 rounded-xl px-5 py-3.5 flex items-center justify-between gap-x-4 transition-all shadow-sm backdrop-blur-sm';
         
@@ -235,7 +236,7 @@
           '</div>' +
           '<div class="flex-shrink-0">' + dueHTML + '</div>';
         container.appendChild(div);
-      });
+      }
     }
 
     function renderGoals() {
@@ -249,7 +250,6 @@
       var matrix = document.getElementById('goals-matrix-container');
       if (!matrix) return;
       
-      // ADJUSTED: Goals headers optimized to text-xl
       matrix.innerHTML = '<div></div>' +
         '<div class="text-zinc-300 font-bold text-xl tracking-wide text-center border-b border-zinc-800/80 pb-2">' + monthStr + '</div>' +
         '<div class="text-zinc-300 font-bold text-xl tracking-wide text-center border-b border-zinc-800/80 pb-2">' + quarterStr + '</div>';
@@ -260,7 +260,6 @@
         var mText = (goalsData.month && goalsData.month[i]) || '—';
         var qText = (goalsData.quarter && goalsData.quarter[i]) || '—';
 
-        // ADJUSTED: Goal labels set to crisp text-base
         var lbl = document.createElement('div');
         lbl.className = "text-zinc-400 text-base font-bold uppercase tracking-wide text-center h-full flex items-center justify-center";
         lbl.textContent = 'Goal ' + (i + 1) + ':';
@@ -277,7 +276,6 @@
         matrix.appendChild(qCell);
       }
 
-      // ADJUSTED: Revenue label balanced to text-base
       var revLabel = document.createElement('div');
       revLabel.className = "text-emerald-400 text-base font-bold uppercase tracking-wide text-center h-full flex items-center justify-center mt-2";
       revLabel.innerHTML = '<i class="fa-solid fa-chart-line mr-1"></i> Revenue:';
@@ -342,9 +340,9 @@
 
     function renderCurrentScreen() {
       var screens = document.querySelectorAll('.dashboard-screen');
-      screens.forEach(function(screen) {
-        screen.classList.add('hidden');
-      });
+      for (var s = 0; s < screens.length; s++) {
+        screens[s].classList.add('hidden');
+      }
       
       var targetScreen = document.getElementById('screen-' + currentScreen);
       if (targetScreen) targetScreen.classList.remove('hidden');
@@ -354,11 +352,11 @@
       if (titleEl) titleEl.textContent = titles[currentScreen];
       
       var dots = document.querySelectorAll('#screen-dots > div');
-      dots.forEach(function(dot, idx) {
-        dot.className = idx === currentScreen 
+      for (var d = 0; d < dots.length; d++) {
+        dots[d].className = d === currentScreen 
           ? "w-2.5 h-2.5 rounded-full bg-zinc-300 cursor-pointer transition-all" 
           : "w-2.5 h-2.5 rounded-full bg-zinc-800 hover:bg-zinc-700 cursor-pointer transition-all";
-      });
+      }
 
       if (currentScreen === 0) renderCalendar();
       if (currentScreen === 1) renderTasks('mytasks-list', dashboardData.myTasks);
