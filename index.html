@@ -119,9 +119,9 @@
         </div>
       </div>
 
-      <!-- Bottom Full-Width Row Column (Stage 1 Leads) -->
+      <!-- Bottom Full-Width Leads Grid -->
       <div class="mt-2">
-        <div class="text-emerald-500/90 font-bold text-xl tracking-wide uppercase border-b border-zinc-900/80 pb-2 mb-3"><i class="fa-solid fa-address-book fa-sm mr-2"></i>Leads & Inquiries</div>
+        <div class="text-emerald-400 font-bold text-xl tracking-wide uppercase border-b border-zinc-900/80 pb-2 mb-3"><i class="fa-solid fa-address-book fa-sm mr-2"></i>Leads & Inquiries</div>
         <div class="grid grid-cols-4 gap-4" id="projections-leads-list"></div>
       </div>
     </div>
@@ -350,12 +350,10 @@
     function renderProjections() {
       var dataset = dashboardData.projections || { active: [], preparation: [], pipeline: [], leads: [] };
       
-      // Render standard 3-month rolling tracks
       populateProjectionColumn('projections-active-list', dataset.active);
       populateProjectionColumn('projections-prep-list', dataset.preparation);
       populateProjectionColumn('projections-pipe-list', dataset.pipeline);
       
-      // Render bottom horizontal leads block safely
       var leadsContainer = document.getElementById('projections-leads-list');
       if (!leadsContainer) return;
       leadsContainer.innerHTML = '';
@@ -381,6 +379,7 @@
 
     function renderCurrentScreen() {
       var screens = document.querySelectorAll('.dashboard-screen');
+      // FIXED: Safely scrubbed out .forEach iteration loops
       for (var s = 0; s < screens.length; s++) {
         screens[s].classList.add('hidden');
       }
@@ -392,6 +391,7 @@
       var titleEl = document.getElementById('screen-title');
       if (titleEl) titleEl.textContent = titles[currentScreen];
       
+      // FIXED: Safely scrubbed out .forEach iteration loops
       var dots = document.querySelectorAll('#screen-dots > div');
       for (var d = 0; d < dots.length; d++) {
         dots[d].className = d === currentScreen 
