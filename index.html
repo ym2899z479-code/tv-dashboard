@@ -5,13 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Five Development • Daily Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link class="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
     body { font-family: 'Inter', system-ui, sans-serif; }
     .section-header { font-size: 1.8rem; line-height: 2.1rem; font-weight: 700; letter-spacing: -.04em; }
     .dashboard-screen { transition: opacity 400ms ease, transform 400ms ease; }
     .event-row, .task-row, .goal-card, .projection-card { transition: all 0.2s ease; }
-    /* ANTI-BURN ANIMATED LIQUID BACKGROUND */
     @keyframes fluidBg {
       0% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
@@ -22,22 +21,11 @@
       background-size: 400% 400%;
       animation: fluidBg 25s ease infinite;
     }
-    /* MICRO-PIXEL SHIFTER */
-    @keyframes pixelShift {
-      0%, 100% { transform: translate(0px, 0px); }
-      25% { transform: translate(1px, 1px); }
-      50% { transform: translate(-1px, 0px); }
-      75% { transform: translate(0px, -1px); }
-    }
-    .burn-protected-header {
-      animation: pixelShift 60s linear infinite;
-    }
   </style>
 </head>
 <body class="moving-ambient-bg text-zinc-200 min-h-screen">
- 
   <!-- Top Bar -->
-  <div class="border-b border-zinc-900/60 bg-zinc-950/40 backdrop-blur sticky top-0 z-50 burn-protected-header">
+  <div class="border-b border-zinc-900/60 bg-zinc-950/40 backdrop-blur sticky top-0 z-50">
     <div class="max-w-screen-2xl mx-auto px-8 py-3 flex items-center justify-between">
       <div class="flex items-center gap-x-4">
         <div class="flex items-center gap-x-3">
@@ -51,4 +39,236 @@
       </div>
       <div class="flex items-center gap-x-8">
         <div class="text-right">
-          <div id="live-time" class="text-2xl font-bold tracking-tight text-zinc-
+          <div id="live-time" class="text-2xl font-bold tracking-tight text-zinc-300"></div>
+          <div id="live-date" class="text-[10px] font-medium text-zinc-500 tracking-[1px] uppercase mt-0.5"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="max-w-screen-2xl mx-auto px-8 pt-4 pb-6">
+    <div id="title-area" class="flex items-end justify-between mb-4">
+      <div>
+        <div id="screen-title" class="section-header text-zinc-100"></div>
+        <div class="text-zinc-500 text-xs mt-0.5 flex items-center gap-x-2">
+          <i class="fa-solid fa-sync fa-sm"></i>
+          <span>Auto-rotating every 30 seconds • Updates every 10 minutes</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-x-2" id="screen-dots">
+        <div onclick="switchToScreen(0)" class="w-2.5 h-2.5 rounded-full bg-zinc-300 cursor-pointer transition-all" data-screen="0"></div>
+        <div onclick="switchToScreen(1)" class="w-2.5 h-2.5 rounded-full bg-zinc-800 hover:bg-zinc-700 cursor-pointer transition-all" data-screen="1"></div>
+        <div onclick="switchToScreen(2)" class="w-2.5 h-2.5 rounded-full bg-zinc-800 hover:bg-zinc-700 cursor-pointer transition-all" data-screen="2"></div>
+        <div onclick="switchToScreen(3)" class="w-2.5 h-2.5 rounded-full bg-zinc-800 hover:bg-zinc-700 cursor-pointer transition-all" data-screen="3"></div>
+        <div onclick="switchToScreen(4)" class="w-2.5 h-2.5 rounded-full bg-zinc-800 hover:bg-zinc-700 cursor-pointer transition-all" data-screen="4"></div>
+        <div onclick="switchToScreen(5)" class="w-2.5 h-2.5 rounded-full bg-zinc-800 hover:bg-zinc-700 cursor-pointer transition-all" data-screen="5"></div>
+        <div onclick="switchToScreen(6)" class="w-2.5 h-2.5 rounded-full bg-zinc-800 hover:bg-zinc-700 cursor-pointer transition-all" data-screen="6"></div>
+      </div>
+    </div>
+    <!-- SCREEN 0: Calendar -->
+    <div id="screen-0" class="dashboard-screen">
+      <div class="grid grid-cols-1 gap-2.5" id="calendar-list"></div>
+    </div>
+    <!-- SCREEN 1: My Tasks -->
+    <div id="screen-1" class="dashboard-screen hidden">
+      <div class="grid grid-cols-1 gap-2.5" id="mytasks-list"></div>
+    </div>
+    <!-- SCREEN 2: BuilderTrend Tasks -->
+    <div id="screen-2" class="dashboard-screen hidden">
+      <div class="grid grid-cols-1 gap-2.5" id="buildertrend-list"></div>
+    </div>
+    <!-- SCREEN 3: Sales Tasks -->
+    <div id="screen-3" class="dashboard-screen hidden">
+      <div class="grid grid-cols-1 gap-2.5" id="sales-list"></div>
+    </div>
+    <!-- SCREEN 4: Marketing Tasks -->
+    <div id="screen-4" class="dashboard-screen hidden">
+      <div class="grid grid-cols-1 gap-2.5" id="marketing-list"></div>
+    </div>
+    <!-- SCREEN 5: Goals -->
+    <div id="screen-5" class="dashboard-screen hidden">
+      <div class="grid grid-cols-[140px_1fr_1fr] gap-x-5 gap-y-2 items-center" id="goals-matrix-container"></div>
+    </div>
+    <!-- SCREEN 6: Projections -->
+    <div id="screen-6" class="dashboard-screen hidden flex flex-col gap-y-4">
+      <div class="grid grid-cols-3 gap-5">
+        <div>
+          <div class="text-blue-400 font-bold text-xl tracking-wide uppercase border-b border-zinc-900/80 pb-1.5 mb-2.5"><i class="fa-solid fa-bolt fa-sm mr-2"></i>Active Jobs</div>
+          <div class="grid grid-cols-1 gap-2" id="projections-active-list"></div>
+        </div>
+        <div>
+          <div class="text-zinc-400 font-bold text-xl tracking-wide uppercase border-b border-zinc-900/80 pb-1.5 mb-2.5"><i class="fa-solid fa-gavel fa-sm mr-2"></i>Pipeline Prospect</div>
+          <div class="grid grid-cols-1 gap-2" id="projections-pipe-list"></div>
+        </div>
+        <div>
+          <div class="text-emerald-400 font-bold text-xl tracking-wide uppercase border-b border-zinc-900/80 pb-1.5 mb-2.5"><i class="fa-solid fa-address-book fa-sm mr-2"></i>Leads & Inquiries</div>
+          <div class="grid grid-cols-1 gap-2" id="projections-leads-list"></div>
+        </div>
+      </div>
+      <div class="mt-1">
+        <div class="text-amber-500/90 font-bold text-xl tracking-wide uppercase border-b border-zinc-900/80 pb-1.5 mb-2.5"><i class="fa-solid fa-sliders fa-sm mr-2"></i>Preparation</div>
+        <div class="grid grid-cols-4 gap-3" id="projections-prep-list"></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    var WEBHOOK_URL = "https://fivedevelopment.app.n8n.cloud/webhook/dashboard-data";
+    var currentScreen = 0;
+    var rotationInterval = null;
+    var dataRefreshInterval = null;
+    var dashboardData = {
+      calendarEvents: [],
+      myTasks: [],
+      buildertrendTasks: [],
+      salesTasks: [],
+      marketingTasks: [],
+      goals: { month: [], quarter: [], monthRevenue: '—', quarterRevenue: '—' },
+      projections: { months: [], active: [], preparation: [], pipeline: [], leads: [] }
+    };
+    function updateClock() {
+      var now = new Date();
+      var timeStr = now.toLocaleTimeString('en-US', { timeZone: 'America/Chicago', hour: 'numeric', minute: '2-digit', hour12: true });
+      document.getElementById('live-time').textContent = timeStr;
+    }
+    function fetchData() {
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", WEBHOOK_URL, true);
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+          try {
+            var raw = JSON.parse(xhr.responseText);
+            // Unwrap calendar (and others if wrapped)
+            dashboardData.calendarEvents = raw.calendarEvents?.data || raw.calendarEvents || [];
+            dashboardData.myTasks = raw.myTasks?.data || raw.myTasks || [];
+            dashboardData.buildertrendTasks = raw.buildertrendTasks?.data || raw.buildertrendTasks || [];
+            dashboardData.salesTasks = raw.salesTasks?.data || raw.salesTasks || [];
+            dashboardData.marketingTasks = raw.marketingTasks?.data || raw.marketingTasks || [];
+            dashboardData.goals = raw.goals || { month: [], quarter: [], monthRevenue: '—', quarterRevenue: '—' };
+            dashboardData.projections = raw.projections || { months: [], active: [], preparation: [], pipeline: [], leads: [] };
+          } catch(e) {
+            console.error("Data parse failure:", e);
+          }
+          renderCurrentScreen();
+        }
+      };
+      xhr.send();
+    }
+    function renderCalendar() {
+      var container = document.getElementById('calendar-list');
+      if (!container) return;
+      container.innerHTML = '';
+      var events = dashboardData.calendarEvents || [];
+      if (events.length === 0) {
+        container.innerHTML = '<div class="bg-zinc-900/40 border border-zinc-800/60 rounded-2xl p-6 text-center"><i class="fa-regular fa-calendar text-3xl text-zinc-700 mb-3"></i><div class="text-lg text-zinc-400">No events scheduled</div></div>';
+        return;
+      }
+      var colorMap = {'1':'#6366f1','2':'#22c55e','3':'#a855f7','4':'#f43f5e','5':'#eab308','6':'#f97316','7':'#0ea5e9','8':'#64748b','9':'#3b82f6','10':'#10b981','11':'#ef4444'};
+      for (var i = 0; i < events.length; i++) {
+        var event = events[i];
+        var accent = colorMap[event.colorId] || '#3b82f6';
+        var div = document.createElement('div');
+        div.className = 'event-row border border-zinc-800/40 rounded-xl py-3.5 px-5 flex items-center gap-x-4 transition-all shadow-md';
+        div.style.background = 'linear-gradient(90deg, ' + accent + '12 0%, rgba(18,18,24,0.75) 100%)';
+        div.style.borderLeft = '5px solid ' + accent;
+        div.innerHTML = '<div class="flex-1 min-w-0 flex items-center justify-between gap-x-4">' +
+            '<div class="font-bold text-xl tracking-tight text-zinc-100 truncate">' + (event.title || 'No title') + '</div>' +
+            '<div class="text-xs font-semibold text-zinc-400 flex items-center gap-x-1.5 flex-shrink-0">' +
+              '<i class="fa-regular fa-clock opacity-80 text-sm" style="color:' + accent + '"></i>' +
+              '<span class="tracking-tight text-sm font-semibold">' + (event.timeframe || 'All day') + '</span>' +
+            '</div>' +
+          '</div>';
+        container.appendChild(div);
+      }
+    }
+    function renderTasks(listId, tasksInput) {
+      var container = document.getElementById(listId);
+      if (!container) return;
+      container.innerHTML = '';
+      var tasks = tasksInput || [];
+      if (tasks.length === 0) {
+        container.innerHTML = '<div class="bg-zinc-900/40 border border-zinc-800/60 rounded-2xl p-6 text-center"><i class="fa-regular fa-check-circle text-3xl text-emerald-700 mb-3"></i><div class="text-lg text-zinc-400">All caught up — nice work</div></div>';
+        return;
+      }
+      for (var i = 0; i < tasks.length; i++) {
+        var task = tasks[i];
+        var div = document.createElement('div');
+        div.className = 'task-row bg-zinc-900/40 border border-zinc-800/50 rounded-xl px-5 py-3.5 flex items-center justify-between gap-x-4 transition-all shadow-sm backdrop-blur-sm';
+        var dueHTML = '';
+        var labelText = (task.dueLabel || '').trim().toLowerCase();
+        if (labelText === 'past due' || task.isPastDue) {
+          dueHTML = '<span class="px-2.5 py-0.5 text-[10px] font-bold tracking-wider rounded-full bg-red-500/10 text-red-400 border border-red-500/20 flex items-center gap-1"><i class="fa-solid fa-circle-exclamation text-[10px]"></i> PAST DUE</span>';
+        } else if (labelText === 'today') {
+          dueHTML = '<span class="px-2.5 py-0.5 text-[10px] font-bold tracking-wider rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1"><i class="fa-solid fa-calendar-day text-[10px]"></i> TODAY</span>';
+        } else if (labelText === 'no due date') {
+          dueHTML = '<span class="px-2.5 py-0.5 text-[10px] font-bold tracking-wider rounded-full bg-zinc-800/80 text-zinc-500 border border-zinc-700/50 flex items-center gap-1"><i class="fa-regular fa-calendar-minus text-[10px]"></i> NO DUE DATE</span>';
+        } else {
+          dueHTML = '<span class="px-2.5 py-0.5 text-[10px] font-bold tracking-wider rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center gap-1"><i class="fa-regular fa-calendar text-[10px]"></i> ' + (task.dueLabel || '') + '</span>';
+        }
+        div.innerHTML = '<div class="flex items-center gap-x-3 flex-1 min-w-0">' +
+            '<div class="w-5 h-5 rounded-full border-2 border-zinc-700 flex-shrink-0 flex items-center justify-center">' +
+              '<div class="w-1.5 h-1.5 rounded-full bg-zinc-800"></div>' +
+            '</div>' +
+            '<div class="flex-1 min-w-0">' +
+              '<div class="font-semibold text-xl tracking-tight text-zinc-200 truncate">' + (task.title || 'No title') + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="flex-shrink-0">' + dueHTML + '</div>';
+        container.appendChild(div);
+      }
+    }
+    // Paste your original renderGoals and renderProjections here if they are not already in the file
+    function renderGoals() {
+      // Your original code
+    }
+    function renderProjections() {
+      // Your original code
+    }
+    function renderCurrentScreen() {
+      document.querySelectorAll('.dashboard-screen').forEach(el => el.classList.add('hidden'));
+      document.getElementById('screen-' + currentScreen).classList.remove('hidden');
+      var titles = ['Calendar', 'My Tasks', 'BuilderTrend Tasks', 'Sales Tasks', 'Marketing Tasks', 'Goals', 'Projections'];
+      document.getElementById('screen-title').textContent = titles[currentScreen];
+      var dots = document.querySelectorAll('#screen-dots > div');
+      dots.forEach((dot, i) => {
+        dot.className = (i === currentScreen)
+          ? "w-2.5 h-2.5 rounded-full bg-zinc-300 cursor-pointer transition-all"
+          : "w-2.5 h-2.5 rounded-full bg-zinc-800 hover:bg-zinc-700 cursor-pointer transition-all";
+      });
+      if (currentScreen === 0) renderCalendar();
+      if (currentScreen === 1) renderTasks('mytasks-list', dashboardData.myTasks);
+      if (currentScreen === 2) renderTasks('buildertrend-list', dashboardData.buildertrendTasks);
+      if (currentScreen === 3) renderTasks('sales-list', dashboardData.salesTasks);
+      if (currentScreen === 4) renderTasks('marketing-list', dashboardData.marketingTasks);
+      if (currentScreen === 5) renderGoals();
+      if (currentScreen === 6) renderProjections();
+    }
+    function switchToScreen(index) {
+      currentScreen = index;
+      renderCurrentScreen();
+    }
+    function startRotation() {
+      if (rotationInterval) clearInterval(rotationInterval);
+      rotationInterval = setInterval(() => {
+        currentScreen = (currentScreen + 1) % 7;
+        renderCurrentScreen();
+      }, 30000);
+    }
+    function startAutoRefresh() {
+      if (dataRefreshInterval) clearInterval(dataRefreshInterval);
+      dataRefreshInterval = setInterval(fetchData, 10 * 60 * 1000);
+    }
+    function initDashboard() {
+      updateClock();
+      setInterval(updateClock, 30000);
+      renderCurrentScreen();
+      fetchData();
+      startRotation();
+      startAutoRefresh();
+    }
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') { currentScreen = (currentScreen + 1) % 7; renderCurrentScreen(); }
+      if (e.key === 'ArrowLeft') { currentScreen = (currentScreen - 1 + 7) % 7; renderCurrentScreen(); }
+    });
+    window.onload = initDashboard;
+  </script>
+</body>
+</html>
