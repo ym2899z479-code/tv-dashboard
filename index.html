@@ -24,6 +24,7 @@
   </style>
 </head>
 <body class="moving-ambient-bg text-zinc-200 min-h-screen">
+
   <!-- Top Bar -->
   <div class="border-b border-zinc-900/60 bg-zinc-950/40 backdrop-blur sticky top-0 z-50">
     <div class="max-w-screen-2xl mx-auto px-8 py-3 flex items-center justify-between">
@@ -163,11 +164,12 @@
           if (xhr.status === 200) {
             try {
               var raw = JSON.parse(xhr.responseText);
-              dashboardData.calendarEvents = raw.calendarEvents || [];
-              dashboardData.myTasks = raw.myTasks || [];
-              dashboardData.buildertrendTasks = raw.buildertrendTasks || [];
-              dashboardData.salesTasks = raw.salesTasks || [];
-              dashboardData.marketingTasks = raw.marketingTasks || [];
+              // Handle both direct array and {type, data} wrapper from n8n
+              dashboardData.calendarEvents = raw.calendarEvents?.data || raw.calendarEvents || [];
+              dashboardData.myTasks = raw.myTasks?.data || raw.myTasks || [];
+              dashboardData.buildertrendTasks = raw.buildertrendTasks?.data || raw.buildertrendTasks || [];
+              dashboardData.salesTasks = raw.salesTasks?.data || raw.salesTasks || [];
+              dashboardData.marketingTasks = raw.marketingTasks?.data || raw.marketingTasks || [];
               dashboardData.goals = raw.goals || { month: [], quarter: [], monthRevenue: '—', quarterRevenue: '—' };
               dashboardData.projections = raw.projections || { months: [], active: [], preparation: [], pipeline: [], leads: [] };
             } catch(e) {
@@ -198,10 +200,10 @@
         div.style.background = 'linear-gradient(90deg, ' + accent + '12 0%, rgba(18,18,24,0.75) 100%)';
         div.style.borderLeft = '5px solid ' + accent;
         div.innerHTML = '<div class="flex-1 min-w-0 flex items-center justify-between gap-x-4">' +
-            '<div class="font-bold text-xl tracking-tight text-zinc-100 truncate">' + event.title + '</div>' +
+            '<div class="font-bold text-xl tracking-tight text-zinc-100 truncate">' + (event.title || 'No title') + '</div>' +
             '<div class="text-xs font-semibold text-zinc-400 flex items-center gap-x-1.5 flex-shrink-0">' +
               '<i class="fa-regular fa-clock opacity-80 text-sm" style="color:' + accent + '"></i>' +
-              '<span class="tracking-tight text-sm font-semibold">' + event.timeframe + '</span>' +
+              '<span class="tracking-tight text-sm font-semibold">' + (event.timeframe || '') + '</span>' +
             '</div>' +
           '</div>';
         container.appendChild(div);
@@ -230,14 +232,14 @@
         } else if (labelText === 'no due date') {
           dueHTML = '<span class="px-2.5 py-0.5 text-[10px] font-bold tracking-wider rounded-full bg-zinc-800/80 text-zinc-500 border border-zinc-700/50 flex items-center gap-1"><i class="fa-regular fa-calendar-minus text-[10px]"></i> NO DUE DATE</span>';
         } else {
-          dueHTML = '<span class="px-2.5 py-0.5 text-[10px] font-bold tracking-wider rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center gap-1"><i class="fa-regular fa-calendar text-[10px]"></i> ' + task.dueLabel + '</span>';
+          dueHTML = '<span class="px-2.5 py-0.5 text-[10px] font-bold tracking-wider rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center gap-1"><i class="fa-regular fa-calendar text-[10px]"></i> ' + (task.dueLabel || '') + '</span>';
         }
         div.innerHTML = '<div class="flex items-center gap-x-3 flex-1 min-w-0">' +
             '<div class="w-5 h-5 rounded-full border-2 border-zinc-700 flex-shrink-0 flex items-center justify-center">' +
               '<div class="w-1.5 h-1.5 rounded-full bg-zinc-800"></div>' +
             '</div>' +
             '<div class="flex-1 min-w-0">' +
-              '<div class="font-semibold text-xl tracking-tight text-zinc-200 truncate">' + task.title + '</div>' +
+              '<div class="font-semibold text-xl tracking-tight text-zinc-200 truncate">' + (task.title || 'No title') + '</div>' +
             '</div>' +
           '</div>' +
           '<div class="flex-shrink-0">' + dueHTML + '</div>';
@@ -246,13 +248,104 @@
     }
 
     function renderGoals() {
-      // Paste your original renderGoals function here (unchanged)
-      // ... (copy from your previous working version) ...
+      // Your original Goals code (unchanged)
+      var now = new Date();
+      var monthStr = "";
+      try {
+        monthStr = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'America/Chicago' });
+      } catch(e) {
+        monthStr = "Current Month";
+      }
+      var quarterNum = Math.floor((now.getMonth() + 3) / 3);
+      var suffixes = ["th", "st", "nd", "rd", "th"];
+      var quarterStr = quarterNum + suffixes[quarterNum] + " Quarter";
+      var matrix = document.getElementById('goals-matrix-container');
+      if (!matrix) return;
+      matrix.innerHTML = '<div></div>' +
+        '<div class="text-zinc-300 font-bold text-xl tracking-wide text-center border-b border-zinc-800/80 pb-1">' + monthStr + '</div>' +
+        '<div class="text-zinc-300 font-bold text-xl tracking-wide text-center border-b border-zinc-800/80 pb-1">' + quarterStr + '</div>';
+      var goalsData = dashboardData.goals || { month: [], quarter: [], monthRevenue: '—', quarterRevenue: '—' };
+      for (var i = 0; i < 3; i++) {
+        var mText = (goalsData.month && goalsData.month[i]) || '—';
+        var qText = (goalsData.quarter && goalsData.quarter[i]) || '—';
+        var lbl = document.createElement('div');
+        lbl.className = "text-zinc-400 text-sm font-bold uppercase tracking-wide text-center h-full flex items-center justify-center";
+        lbl.textContent = 'Goal ' + (i + 1) + ':';
+        matrix.appendChild(lbl);
+        var mCell = document.createElement('div');
+        mCell.className = "goal-card bg-zinc-900/40 border border-zinc-800/50 rounded-xl p-1.5 min-h-[38px] flex items-center justify-center text-center shadow-md backdrop-blur-sm";
+        mCell.innerHTML = '<div class="text-zinc-200 text-sm font-semibold tracking-tight leading-tight">' + mText + '</div>';
+        matrix.appendChild(mCell);
+        var qCell = document.createElement('div');
+        qCell.className = "goal-card bg-zinc-900/40 border border-zinc-800/50 rounded-xl p-1.5 min-h-[38px] flex items-center justify-center text-center shadow-md backdrop-blur-sm";
+        qCell.innerHTML = '<div class="text-zinc-200 text-sm font-semibold tracking-tight leading-tight">' + qText + '</div>';
+        matrix.appendChild(qCell);
+      }
+      // Revenue rows (same as before)
+      var revLabel = document.createElement('div');
+      revLabel.className = "text-emerald-400 text-sm font-bold uppercase tracking-wide text-center h-full flex items-center justify-center mt-1";
+      revLabel.innerHTML = '<i class="fa-solid fa-chart-line mr-1"></i> Revenue:';
+      matrix.appendChild(revLabel);
+      var mRevCell = document.createElement('div');
+      mRevCell.className = "goal-card border border-emerald-900/30 rounded-xl p-1.5 flex items-center justify-center text-center shadow-md backdrop-blur-sm mt-1";
+      mRevCell.style.background = 'linear-gradient(90deg, rgba(16,185,129,0.04) 0%, rgba(0,0,0,0) 100%)';
+      mRevCell.innerHTML = '<span class="text-[10px] font-bold text-emerald-500/60 uppercase tracking-widest mr-1.5">Month:</span>' +
+        '<span class="text-emerald-400 text-base font-bold tracking-tight">' + formatCurrency(goalsData.monthRevenue) + '</span>';
+      matrix.appendChild(mRevCell);
+      var qRevCell = document.createElement('div');
+      qRevCell.className = "goal-card border border-emerald-900/30 rounded-xl p-1.5 flex items-center justify-center text-center shadow-md backdrop-blur-sm mt-1";
+      qRevCell.style.background = 'linear-gradient(90deg, rgba(16,185,129,0.04) 0%, rgba(0,0,0,0) 100%)';
+      qRevCell.innerHTML = '<span class="text-[10px] font-bold text-emerald-500/60 uppercase tracking-widest mr-1.5">Quarter:</span>' +
+        '<span class="text-emerald-400 text-base font-bold tracking-tight">' + formatCurrency(goalsData.quarterRevenue) + '</span>';
+      matrix.appendChild(qRevCell);
+    }
+
+    function populateProjectionColumn(elementId, items) {
+      var container = document.getElementById(elementId);
+      if (!container) return;
+      container.innerHTML = '';
+      if (!items || items.length === 0) {
+        var spanClass = (elementId === 'projections-prep-list') ? 'col-span-4 ' : '';
+        container.innerHTML = '<div class="' + spanClass + 'bg-zinc-900/20 border border-zinc-900/40 border-dashed rounded-xl p-3 text-center text-zinc-600 text-xs font-medium">No tracks active</div>';
+        return;
+      }
+      for (var i = 0; i < items.length; i++) {
+        var job = items[i];
+        var card = document.createElement('div');
+        card.className = 'projection-card bg-zinc-950/40 border border-zinc-900/80 rounded-xl p-1.5 shadow-sm flex flex-col gap-y-0.5 backdrop-blur-sm';
+        card.innerHTML = 
+          '<div class="text-zinc-100 font-bold text-xs tracking-tight truncate border-b border-zinc-900/40 pb-0.5">' + job.address + '</div>' +
+          '<div class="grid grid-cols-3 gap-1 text-center mt-0.5">' +
+            '<div><div class="text-[8px] font-bold text-zinc-500 uppercase tracking-wider">' + job.m1Label + '</div><div class="text-zinc-300 text-xs font-semibold mt-0.5">' + (job.m1Value > 0 ? formatCurrency(job.m1Value) : '—') + '</div></div>' +
+            '<div><div class="text-[8px] font-bold text-zinc-500 uppercase tracking-wider">' + job.m2Label + '</div><div class="text-zinc-300 text-xs font-semibold mt-0.5">' + (job.m2Value > 0 ? formatCurrency(job.m2Value) : '—') + '</div></div>' +
+            '<div><div class="text-[8px] font-bold text-zinc-500 uppercase tracking-wider">' + job.m3Label + '</div><div class="text-zinc-300 text-xs font-semibold mt-0.5">' + (job.m3Value > 0 ? formatCurrency(job.m3Value) : '—') + '</div></div>' +
+          '</div>';
+        container.appendChild(card);
+      }
     }
 
     function renderProjections() {
-      // Paste your original renderProjections function here (unchanged)
-      // ... (copy from your previous working version) ...
+      var dataset = dashboardData.projections || { active: [], preparation: [], pipeline: [], leads: [] };
+      populateProjectionColumn('projections-active-list', dataset.active);
+      populateProjectionColumn('projections-pipe-list', dataset.pipeline);
+      populateProjectionColumn('projections-prep-list', dataset.preparation);
+      var leadsContainer = document.getElementById('projections-leads-list');
+      if (!leadsContainer) return;
+      leadsContainer.innerHTML = '';
+      var leadsItems = dataset.leads || [];
+      if (leadsItems.length === 0) {
+        leadsContainer.innerHTML = '<div class="bg-zinc-900/20 border border-zinc-900/40 border-dashed rounded-xl p-3 text-center text-zinc-600 text-xs font-medium">No active pending leads</div>';
+        return;
+      }
+      for (var i = 0; i < leadsItems.length; i++) {
+        var lead = leadsItems[i];
+        var card = document.createElement('div');
+        card.className = 'projection-card bg-zinc-950/40 border border-zinc-900/80 rounded-xl p-1.5 shadow-sm flex items-center justify-between gap-x-2 backdrop-blur-sm mb-2';
+        card.innerHTML = 
+          '<div class="text-zinc-200 font-bold text-xs truncate flex-1 min-w-0">' + lead.address + '</div>' +
+          '<div class="text-emerald-400 font-bold text-xs flex-shrink-0 tracking-tight">' + (lead.totalValueE > 0 ? formatCurrency(lead.totalValueE) : '—') + '</div>';
+        leadsContainer.appendChild(card);
+      }
     }
 
     function renderCurrentScreen() {
