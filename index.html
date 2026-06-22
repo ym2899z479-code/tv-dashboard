@@ -24,6 +24,7 @@
   </style>
 </head>
 <body class="moving-ambient-bg text-zinc-200 min-h-screen">
+
   <!-- Top Bar -->
   <div class="border-b border-zinc-900/60 bg-zinc-950/40 backdrop-blur sticky top-0 z-50">
     <div class="max-w-screen-2xl mx-auto px-8 py-3 flex items-center justify-between">
@@ -45,6 +46,7 @@
       </div>
     </div>
   </div>
+
   <div class="max-w-screen-2xl mx-auto px-8 pt-4 pb-6">
     <div id="title-area" class="flex items-end justify-between mb-4">
       <div>
@@ -64,6 +66,7 @@
         <div onclick="switchToScreen(6)" class="w-2.5 h-2.5 rounded-full bg-zinc-800 hover:bg-zinc-700 cursor-pointer transition-all" data-screen="6"></div>
       </div>
     </div>
+
     <!-- SCREEN 0: Calendar -->
     <div id="screen-0" class="dashboard-screen">
       <div class="grid grid-cols-1 gap-2.5" id="calendar-list"></div>
@@ -110,6 +113,7 @@
       </div>
     </div>
   </div>
+
   <script>
     var WEBHOOK_URL = "https://fivedevelopment.app.n8n.cloud/webhook/dashboard-data";
     var currentScreen = 0;
@@ -124,11 +128,13 @@
       goals: { month: [], quarter: [], monthRevenue: '—', quarterRevenue: '—' },
       projections: { months: [], active: [], preparation: [], pipeline: [], leads: [] }
     };
+
     function updateClock() {
       var now = new Date();
       var timeStr = now.toLocaleTimeString('en-US', { timeZone: 'America/Chicago', hour: 'numeric', minute: '2-digit', hour12: true });
       document.getElementById('live-time').textContent = timeStr;
     }
+
     function fetchData() {
       var xhr = new XMLHttpRequest();
       xhr.open("GET", WEBHOOK_URL, true);
@@ -136,7 +142,7 @@
         if (xhr.readyState === 4 && xhr.status === 200) {
           try {
             var raw = JSON.parse(xhr.responseText);
-            // Unwrap calendar (and others if wrapped)
+            // Working Calendar unwrap
             dashboardData.calendarEvents = raw.calendarEvents?.data || raw.calendarEvents || [];
             dashboardData.myTasks = raw.myTasks?.data || raw.myTasks || [];
             dashboardData.buildertrendTasks = raw.buildertrendTasks?.data || raw.buildertrendTasks || [];
@@ -152,6 +158,7 @@
       };
       xhr.send();
     }
+
     function renderCalendar() {
       var container = document.getElementById('calendar-list');
       if (!container) return;
@@ -179,6 +186,7 @@
         container.appendChild(div);
       }
     }
+
     function renderTasks(listId, tasksInput) {
       var container = document.getElementById(listId);
       if (!container) return;
@@ -215,24 +223,36 @@
         container.appendChild(div);
       }
     }
-    // Paste your original renderGoals and renderProjections here if they are not already in the file
+
+    // Placeholder for Goals and Projections (won't break the page)
     function renderGoals() {
-      // Your original code
+      var container = document.getElementById('goals-matrix-container');
+      if (container) container.innerHTML = '<div class="col-span-3 text-center py-12 text-zinc-400">Goals data loading...</div>';
     }
+
     function renderProjections() {
-      // Your original code
+      // Placeholder
+      var lists = ['projections-active-list', 'projections-pipe-list', 'projections-leads-list', 'projections-prep-list'];
+      lists.forEach(id => {
+        var el = document.getElementById(id);
+        if (el) el.innerHTML = '<div class="text-center py-8 text-zinc-400">Projections data loading...</div>';
+      });
     }
+
     function renderCurrentScreen() {
       document.querySelectorAll('.dashboard-screen').forEach(el => el.classList.add('hidden'));
       document.getElementById('screen-' + currentScreen).classList.remove('hidden');
+
       var titles = ['Calendar', 'My Tasks', 'BuilderTrend Tasks', 'Sales Tasks', 'Marketing Tasks', 'Goals', 'Projections'];
       document.getElementById('screen-title').textContent = titles[currentScreen];
+
       var dots = document.querySelectorAll('#screen-dots > div');
       dots.forEach((dot, i) => {
-        dot.className = (i === currentScreen)
-          ? "w-2.5 h-2.5 rounded-full bg-zinc-300 cursor-pointer transition-all"
+        dot.className = (i === currentScreen) 
+          ? "w-2.5 h-2.5 rounded-full bg-zinc-300 cursor-pointer transition-all" 
           : "w-2.5 h-2.5 rounded-full bg-zinc-800 hover:bg-zinc-700 cursor-pointer transition-all";
       });
+
       if (currentScreen === 0) renderCalendar();
       if (currentScreen === 1) renderTasks('mytasks-list', dashboardData.myTasks);
       if (currentScreen === 2) renderTasks('buildertrend-list', dashboardData.buildertrendTasks);
@@ -241,10 +261,12 @@
       if (currentScreen === 5) renderGoals();
       if (currentScreen === 6) renderProjections();
     }
+
     function switchToScreen(index) {
       currentScreen = index;
       renderCurrentScreen();
     }
+
     function startRotation() {
       if (rotationInterval) clearInterval(rotationInterval);
       rotationInterval = setInterval(() => {
@@ -252,10 +274,12 @@
         renderCurrentScreen();
       }, 30000);
     }
+
     function startAutoRefresh() {
       if (dataRefreshInterval) clearInterval(dataRefreshInterval);
       dataRefreshInterval = setInterval(fetchData, 10 * 60 * 1000);
     }
+
     function initDashboard() {
       updateClock();
       setInterval(updateClock, 30000);
@@ -264,10 +288,12 @@
       startRotation();
       startAutoRefresh();
     }
+
     document.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowRight') { currentScreen = (currentScreen + 1) % 7; renderCurrentScreen(); }
       if (e.key === 'ArrowLeft') { currentScreen = (currentScreen - 1 + 7) % 7; renderCurrentScreen(); }
     });
+
     window.onload = initDashboard;
   </script>
 </body>
