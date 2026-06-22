@@ -164,14 +164,19 @@
           if (xhr.status === 200) {
             try {
               var raw = JSON.parse(xhr.responseText);
-              // Handle both direct array and {type, data} wrapper from n8n
-              dashboardData.calendarEvents = raw.calendarEvents?.data || raw.calendarEvents || [];
-              dashboardData.myTasks = raw.myTasks?.data || raw.myTasks || [];
-              dashboardData.buildertrendTasks = raw.buildertrendTasks?.data || raw.buildertrendTasks || [];
-              dashboardData.salesTasks = raw.salesTasks?.data || raw.salesTasks || [];
-              dashboardData.marketingTasks = raw.marketingTasks?.data || raw.marketingTasks || [];
+
+              // Fix for wrapped calendar data from n8n
+              dashboardData.calendarEvents = (raw.calendarEvents && raw.calendarEvents.data) 
+                ? raw.calendarEvents.data 
+                : (raw.calendarEvents || []);
+
+              dashboardData.myTasks = raw.myTasks || [];
+              dashboardData.buildertrendTasks = raw.buildertrendTasks || [];
+              dashboardData.salesTasks = raw.salesTasks || [];
+              dashboardData.marketingTasks = raw.marketingTasks || [];
               dashboardData.goals = raw.goals || { month: [], quarter: [], monthRevenue: '—', quarterRevenue: '—' };
               dashboardData.projections = raw.projections || { months: [], active: [], preparation: [], pipeline: [], leads: [] };
+
             } catch(e) {
               console.error("Data parse failure:", e);
             }
@@ -248,7 +253,7 @@
     }
 
     function renderGoals() {
-      // Your original Goals code (unchanged)
+      // Your original working Goals code
       var now = new Date();
       var monthStr = "";
       try {
@@ -281,7 +286,6 @@
         qCell.innerHTML = '<div class="text-zinc-200 text-sm font-semibold tracking-tight leading-tight">' + qText + '</div>';
         matrix.appendChild(qCell);
       }
-      // Revenue rows (same as before)
       var revLabel = document.createElement('div');
       revLabel.className = "text-emerald-400 text-sm font-bold uppercase tracking-wide text-center h-full flex items-center justify-center mt-1";
       revLabel.innerHTML = '<i class="fa-solid fa-chart-line mr-1"></i> Revenue:';
@@ -313,104 +317,7 @@
         var job = items[i];
         var card = document.createElement('div');
         card.className = 'projection-card bg-zinc-950/40 border border-zinc-900/80 rounded-xl p-1.5 shadow-sm flex flex-col gap-y-0.5 backdrop-blur-sm';
-        card.innerHTML = 
+        card.innerHTML =
           '<div class="text-zinc-100 font-bold text-xs tracking-tight truncate border-b border-zinc-900/40 pb-0.5">' + job.address + '</div>' +
           '<div class="grid grid-cols-3 gap-1 text-center mt-0.5">' +
-            '<div><div class="text-[8px] font-bold text-zinc-500 uppercase tracking-wider">' + job.m1Label + '</div><div class="text-zinc-300 text-xs font-semibold mt-0.5">' + (job.m1Value > 0 ? formatCurrency(job.m1Value) : '—') + '</div></div>' +
-            '<div><div class="text-[8px] font-bold text-zinc-500 uppercase tracking-wider">' + job.m2Label + '</div><div class="text-zinc-300 text-xs font-semibold mt-0.5">' + (job.m2Value > 0 ? formatCurrency(job.m2Value) : '—') + '</div></div>' +
-            '<div><div class="text-[8px] font-bold text-zinc-500 uppercase tracking-wider">' + job.m3Label + '</div><div class="text-zinc-300 text-xs font-semibold mt-0.5">' + (job.m3Value > 0 ? formatCurrency(job.m3Value) : '—') + '</div></div>' +
-          '</div>';
-        container.appendChild(card);
-      }
-    }
-
-    function renderProjections() {
-      var dataset = dashboardData.projections || { active: [], preparation: [], pipeline: [], leads: [] };
-      populateProjectionColumn('projections-active-list', dataset.active);
-      populateProjectionColumn('projections-pipe-list', dataset.pipeline);
-      populateProjectionColumn('projections-prep-list', dataset.preparation);
-      var leadsContainer = document.getElementById('projections-leads-list');
-      if (!leadsContainer) return;
-      leadsContainer.innerHTML = '';
-      var leadsItems = dataset.leads || [];
-      if (leadsItems.length === 0) {
-        leadsContainer.innerHTML = '<div class="bg-zinc-900/20 border border-zinc-900/40 border-dashed rounded-xl p-3 text-center text-zinc-600 text-xs font-medium">No active pending leads</div>';
-        return;
-      }
-      for (var i = 0; i < leadsItems.length; i++) {
-        var lead = leadsItems[i];
-        var card = document.createElement('div');
-        card.className = 'projection-card bg-zinc-950/40 border border-zinc-900/80 rounded-xl p-1.5 shadow-sm flex items-center justify-between gap-x-2 backdrop-blur-sm mb-2';
-        card.innerHTML = 
-          '<div class="text-zinc-200 font-bold text-xs truncate flex-1 min-w-0">' + lead.address + '</div>' +
-          '<div class="text-emerald-400 font-bold text-xs flex-shrink-0 tracking-tight">' + (lead.totalValueE > 0 ? formatCurrency(lead.totalValueE) : '—') + '</div>';
-        leadsContainer.appendChild(card);
-      }
-    }
-
-    function renderCurrentScreen() {
-      var screens = document.querySelectorAll('.dashboard-screen');
-      for (var s = 0; s < screens.length; s++) {
-        screens[s].classList.add('hidden');
-      }
-      var targetScreen = document.getElementById('screen-' + currentScreen);
-      if (targetScreen) targetScreen.classList.remove('hidden');
-
-      var titles = ['Calendar', 'My Tasks', 'BuilderTrend Tasks', 'Sales Tasks', 'Marketing Tasks', 'Goals', 'Projections'];
-      var titleEl = document.getElementById('screen-title');
-      if (titleEl) titleEl.textContent = titles[currentScreen];
-
-      var dots = document.querySelectorAll('#screen-dots > div');
-      for (var d = 0; d < dots.length; d++) {
-        if (d === currentScreen) {
-          dots[d].className = "w-2.5 h-2.5 rounded-full bg-zinc-300 cursor-pointer transition-all";
-        } else {
-          dots[d].className = "w-2.5 h-2.5 rounded-full bg-zinc-800 hover:bg-zinc-700 cursor-pointer transition-all";
-        }
-      }
-
-      if (currentScreen === 0) renderCalendar();
-      if (currentScreen === 1) renderTasks('mytasks-list', dashboardData.myTasks);
-      if (currentScreen === 2) renderTasks('buildertrend-list', dashboardData.buildertrendTasks);
-      if (currentScreen === 3) renderTasks('sales-list', dashboardData.salesTasks);
-      if (currentScreen === 4) renderTasks('marketing-list', dashboardData.marketingTasks);
-      if (currentScreen === 5) renderGoals();
-      if (currentScreen === 6) renderProjections();
-    }
-
-    function switchToScreen(index) {
-      currentScreen = index;
-      renderCurrentScreen();
-    }
-
-    function startRotation() {
-      if (rotationInterval) clearInterval(rotationInterval);
-      rotationInterval = setInterval(function() {
-        currentScreen = (currentScreen + 1) % 7;
-        renderCurrentScreen();
-      }, 30000);
-    }
-
-    function startAutoRefresh() {
-      if (dataRefreshInterval) clearInterval(dataRefreshInterval);
-      dataRefreshInterval = setInterval(fetchData, 10 * 60 * 1000);
-    }
-
-    function initDashboard() {
-      updateClock();
-      setInterval(updateClock, 30000);
-      renderCurrentScreen();
-      fetchData();
-      startRotation();
-      startAutoRefresh();
-    }
-
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'ArrowRight') { currentScreen = (currentScreen + 1) % 7; renderCurrentScreen(); }
-      if (e.key === 'ArrowLeft') { currentScreen = (currentScreen - 1 + 7) % 7; renderCurrentScreen(); }
-    });
-
-    window.onload = initDashboard;
-  </script>
-</body>
-</html>
+            '<div><div class="text-[8px] font-bold text-zinc-500 uppercase tracking-wider">' + job.m1Label + '</div><
