@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
     body { font-family: 'Inter', system-ui, sans-serif; }
-    .section-header { font-size: 1.8rem; line-height: 2.1rem; font-weight: 700; letter-spacing: -.04em; }
+    .section-header { font-size: 1.9rem; line-height: 2.2rem; font-weight: 700; letter-spacing: -.04em; }
     .dashboard-screen { transition: opacity 400ms ease; }
     .event-row, .task-row { transition: all 0.2s ease; }
   </style>
@@ -30,71 +30,69 @@
 
   <div class="max-w-screen-2xl mx-auto px-8 pt-6 pb-12">
     <div class="flex justify-between items-end mb-6">
-      <div id="screen-title" class="section-header text-white"></div>
-      <div class="flex gap-x-2" id="screen-dots"></div>
+      <div>
+        <div id="screen-title" class="section-header text-white"></div>
+        <div class="text-zinc-500 text-sm">Auto-rotating every 30s • Updates every 10min</div>
+      </div>
+      <div class="flex gap-2" id="screen-dots"></div>
     </div>
 
     <!-- Calendar -->
     <div id="screen-0" class="dashboard-screen">
-      <div class="grid grid-cols-1 gap-3" id="calendar-list"></div>
+      <div id="calendar-list" class="grid grid-cols-1 gap-3"></div>
     </div>
     <!-- My Tasks -->
     <div id="screen-1" class="dashboard-screen hidden">
-      <div class="grid grid-cols-1 gap-3" id="mytasks-list"></div>
+      <div id="mytasks-list" class="grid grid-cols-1 gap-3"></div>
     </div>
     <!-- BuilderTrend -->
     <div id="screen-2" class="dashboard-screen hidden">
-      <div class="grid grid-cols-1 gap-3" id="buildertrend-list"></div>
+      <div id="buildertrend-list" class="grid grid-cols-1 gap-3"></div>
     </div>
     <!-- Sales Tasks -->
     <div id="screen-3" class="dashboard-screen hidden">
-      <div class="grid grid-cols-1 gap-3" id="sales-list"></div>
+      <div id="sales-list" class="grid grid-cols-1 gap-3"></div>
     </div>
     <!-- Marketing Tasks -->
     <div id="screen-4" class="dashboard-screen hidden">
-      <div class="grid grid-cols-1 gap-3" id="marketing-list"></div>
+      <div id="marketing-list" class="grid grid-cols-1 gap-3"></div>
     </div>
-    <!-- Goals -->
+    <!-- Goals & Projections (simplified for now) -->
     <div id="screen-5" class="dashboard-screen hidden">
-      <div class="grid grid-cols-[140px_1fr_1fr] gap-x-5 gap-y-2 items-center" id="goals-matrix-container"></div>
+      <div class="text-center text-zinc-400 py-20">Goals Screen</div>
     </div>
-    <!-- Projections -->
-    <div id="screen-6" class="dashboard-screen hidden flex flex-col gap-y-4">
-      <!-- Your original Projections HTML here -->
-      <div class="grid grid-cols-3 gap-5">
-        <div><div class="text-blue-400 font-bold text-xl">Active Jobs</div><div id="projections-active-list" class="grid grid-cols-1 gap-2"></div></div>
-        <div><div class="text-zinc-400 font-bold text-xl">Pipeline Prospect</div><div id="projections-pipe-list" class="grid grid-cols-1 gap-2"></div></div>
-        <div><div class="text-emerald-400 font-bold text-xl">Leads & Inquiries</div><div id="projections-leads-list" class="grid grid-cols-1 gap-2"></div></div>
-      </div>
-      <div><div class="text-amber-500 font-bold text-xl">Preparation</div><div id="projections-prep-list" class="grid grid-cols-4 gap-3"></div></div>
+    <div id="screen-6" class="dashboard-screen hidden">
+      <div class="text-center text-zinc-400 py-20">Projections Screen</div>
     </div>
   </div>
 
   <script>
     const WEBHOOK_URL = "https://fivedevelopment.app.n8n.cloud/webhook/dashboard-data";
     let currentScreen = 0;
-    let dashboardData = { calendarEvents: [], myTasks: [], buildertrendTasks: [], salesTasks: [], marketingTasks: [], goals: {}, projections: {} };
+    let dashboardData = {
+      calendarEvents: [], myTasks: [], buildertrendTasks: [], salesTasks: [], marketingTasks: []
+    };
 
     function updateClock() {
       const now = new Date();
-      document.getElementById('live-time').textContent = now.toLocaleTimeString('en-US', { timeZone: 'America/Chicago', hour: 'numeric', minute: '2-digit', hour12: true });
+      document.getElementById('live-time').textContent = now.toLocaleTimeString('en-US', {
+        timeZone: 'America/Chicago', hour: 'numeric', minute: '2-digit', hour12: true
+      });
     }
 
     function fetchData() {
       fetch(WEBHOOK_URL)
         .then(r => r.json())
         .then(raw => {
-          // Unwrap n8n wrapper structure
+          // Robust unwrapping for n8n wrapper format
           dashboardData.calendarEvents = raw.calendarEvents?.data || raw.calendarEvents || [];
           dashboardData.myTasks = raw.myTasks?.data || raw.myTasks || [];
           dashboardData.buildertrendTasks = raw.buildertrendTasks?.data || raw.buildertrendTasks || [];
           dashboardData.salesTasks = raw.salesTasks?.data || raw.salesTasks || [];
           dashboardData.marketingTasks = raw.marketingTasks?.data || raw.marketingTasks || [];
-          dashboardData.goals = raw.goals || {};
-          dashboardData.projections = raw.projections || {};
           renderCurrentScreen();
         })
-        .catch(err => console.error(err));
+        .catch(err => console.error("Fetch error", err));
     }
 
     function renderCalendar() {
@@ -102,13 +100,16 @@
       container.innerHTML = '';
       const events = dashboardData.calendarEvents || [];
       if (events.length === 0) {
-        container.innerHTML = '<div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 text-center">No events scheduled</div>';
+        container.innerHTML = `<div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 text-center text-zinc-400">No events scheduled</div>`;
         return;
       }
       events.forEach(event => {
         const div = document.createElement('div');
         div.className = 'event-row bg-zinc-900 border border-zinc-800 rounded-3xl px-7 py-5 flex items-center gap-x-5';
-        div.innerHTML = `<div class="flex-1"><div class="font-semibold text-2xl">${event.title || 'No title'}</div></div><div class="font-mono text-lg text-zinc-400">${event.timeframe || ''}</div>`;
+        div.innerHTML = `
+          <div class="flex-1 font-semibold text-2xl tracking-tight">${event.title || 'No title'}</div>
+          <div class="font-mono text-lg text-zinc-400">${event.timeframe || 'All day'}</div>
+        `;
         container.appendChild(div);
       });
     }
@@ -117,13 +118,16 @@
       const container = document.getElementById(listId);
       container.innerHTML = '';
       if (!tasks || tasks.length === 0) {
-        container.innerHTML = '<div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 text-center">All caught up</div>';
+        container.innerHTML = `<div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 text-center text-emerald-400">All caught up — nice work</div>`;
         return;
       }
       tasks.forEach(task => {
         const div = document.createElement('div');
-        div.className = 'task-row bg-zinc-900 border border-zinc-800 rounded-3xl px-7 py-5 flex items-center justify-between';
-        div.innerHTML = `<div class="font-semibold text-2xl">${task.title || 'No title'}</div><div class="text-sm">${task.dueLabel || ''}</div>`;
+        div.className = 'task-row bg-zinc-900 border border-zinc-800 rounded-3xl px-7 py-5 flex justify-between items-center';
+        div.innerHTML = `
+          <div class="font-semibold text-2xl tracking-tight">${task.title || 'No title'}</div>
+          <div class="text-sm font-medium">${task.dueLabel || ''}</div>
+        `;
         container.appendChild(div);
       });
     }
@@ -140,7 +144,6 @@
       if (currentScreen === 2) renderTasks('buildertrend-list', dashboardData.buildertrendTasks);
       if (currentScreen === 3) renderTasks('sales-list', dashboardData.salesTasks);
       if (currentScreen === 4) renderTasks('marketing-list', dashboardData.marketingTasks);
-      // Goals and Projections can be added later if needed
     }
 
     function switchToScreen(n) {
@@ -152,12 +155,14 @@
       updateClock();
       setInterval(updateClock, 30000);
       fetchData();
-      setInterval(fetchData, 10*60*1000);
-      // Rotation
+      setInterval(fetchData, 600000); // 10 minutes
+
+      // Auto-rotate
       setInterval(() => {
         currentScreen = (currentScreen + 1) % 7;
         renderCurrentScreen();
       }, 30000);
+
       renderCurrentScreen();
     }
 
